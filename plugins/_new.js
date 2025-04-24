@@ -14,7 +14,7 @@ let {
  smd(
   {
     pattern: "channel",
-    desc: "To check ping",
+    desc: "To view channel details",
     react: "🔗",
     category: "user",
     filename: __filename,
