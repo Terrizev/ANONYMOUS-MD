@@ -46,7 +46,7 @@ smd(
           
           const asciiArt = `
 ╔══════════════════════╗
-║     MAXTECH_MD-V2    ║
+║     ANONYMOUS-MD    ║
 ╚══════════════════════╝
           
 • Response Rate: ${pingSeconds} seconds
@@ -55,7 +55,7 @@ smd(
 - ${quote.author}
 
 ╔══════════════════════╗
-║     MAXTECH_MD-V2    ║
+║     ANONYMOUS-MD    ║
 ╚══════════════════════╝
           `;
           
@@ -68,7 +68,7 @@ smd(
           
           const asciiArt = `
 ┌──────────────────────┐
-│    MAXTECH_MD-V2     │
+│    ANONYMOUS-MD     │
 ├──────────────────────┤
 │ • Response Rate: ${pingSeconds}s │
 ├──────────────────────┤
@@ -86,7 +86,7 @@ smd(
           
           const asciiArt = `
 ╭──────────────────────╮
-│   ████ MAXTECH ████  │
+│   ████ ANONYMOUS-MD ████  │
 ├──────────────────────┤
 │ Response: ${pingSeconds}s  │
 ├──────────────────────┤
@@ -103,7 +103,7 @@ smd(
           const asciiArt = `
   _____ _____ _____ _____ 
  |     |     |     |     |
- | M A X T E C H - M D   |
+ | A N O N Y M O U S-MD  |
  |_____|_____|_____|_____|
  |                       |
  | Uptime: ${pingSeconds}s       |
