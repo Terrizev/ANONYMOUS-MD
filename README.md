@@ -1,9 +1,6 @@
  # ANONYMOUS-MD 
-   <a><img src='https://i.imgur.com/LyHic3iY.gif'/></a><a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
-<p align="center">
-<p align="center">
-  <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=EB+Garamond&weight=800&size=28&duration=4000&pause=1000&random=false&width=435&lines=+•★⃝ ANONYMOUS-+MD-+★⃝•;MULTI-DEVICE+WHATSAPP+BOT;DEVELOPED+BY+ANONYMOUS+TECH;RELEASED+DATE+22%2F6%2F2025." alt="Typing SVG" /></a>
- </p>
+   <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&size=100&pause=1000&color=ff0000&center=true&width=1000&height=200&lines=ANONYMOUS-MD" alt="Typing SVG" /></a>
+  </p>
  
 <p align="center">
 <img src="https://files.catbox.moe/2i40zv.jpg"/> 
