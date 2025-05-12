@@ -60,7 +60,5 @@ href="https://github.com/Terrizev/ANONYMOUS-MD/graphs/commit-activity"><img heig
 ---
 
 ---
-***
-<a href="https://mr-pk-web.vercel.app/"><img src="https://img.shields.io/badge/ANONYMOUS%20MD%20WEB-skyblue" alt="ANONYMOUS_MD_WEB" width="270"></a>
 
 
