@@ -324,54 +324,60 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage.startsWith('.attp'):
                 await attpCommand(sock, chatId, message);
                 break;
-            case userMessage.startsWith('.mode'):
-                // Check if sender is the owner
-                if (!message.key.fromMe) {
-                    await sock.sendMessage(chatId, { text: 'Only bot owner can use this command!', ...channelInfo });
-                    return;
-                }
-                // Read current data first
-                let data;
-                try {
-                    data = JSON.parse(fs.readFileSync('./data/messageCount.json'));
-                } catch (error) {
-                    console.error('Error reading access mode:', error);
-                    await sock.sendMessage(chatId, { text: 'Failed to read bot mode status', ...channelInfo });
-                    return;
-                }
+            case userMessage.startsWith('.public'):
+case userMessage.startsWith('.private'):
+case userMessage.startsWith('.mode'):
+    // Extract base command
+    const command = userMessage.split(' ')[0].toLowerCase();
+    
+    // Handle mode status check
+    if (command === '.mode') {
+        // Read current data
+        let data;
+        try {
+            data = JSON.parse(fs.readFileSync('./data/messageCount.json'));
+            const currentMode = data.isPublic ? 'public' : 'private';
+            await sock.sendMessage(chatId, {
+                text: `Current bot mode: *${currentMode}*`,
+                ...channelInfo
+            });
+        } catch (error) {
+            console.error('Error reading mode status:', error);
+            await sock.sendMessage(chatId, { text: 'Failed to check bot mode', ...channelInfo });
+        }
+        return;
+    }
 
-                const action = userMessage.split(' ')[1]?.toLowerCase();
-                // If no argument provided, show current status
-                if (!action) {
-                    const currentMode = data.isPublic ? 'public' : 'private';
-                    await sock.sendMessage(chatId, {
-                        text: `Current bot mode: *${currentMode}*\n\nUsage: .mode public/private\n\nExample:\n.mode public - Allow everyone to use bot\n.mode private - Restrict to owner only`,
-                        ...channelInfo
-                    });
-                    return;
-                }
+    // Verify owner for mode changes
+    if (!message.key.fromMe) {
+        await sock.sendMessage(chatId, { text: 'Only bot owner can use this command!', ...channelInfo });
+        return;
+    }
 
-                if (action !== 'public' && action !== 'private') {
-                    await sock.sendMessage(chatId, {
-                        text: 'Usage: .mode public/private\n\nExample:\n.mode public - Allow everyone to use bot\n.mode private - Restrict to owner only',
-                        ...channelInfo
-                    });
-                    return;
-                }
+    // Handle mode change
+    try {
+        const data = JSON.parse(fs.readFileSync('./data/messageCount.json'));
+        const newMode = command === '.public' ? true : false;
+        
+        if (data.isPublic === newMode) {
+            await sock.sendMessage(chatId, { 
+                text: `Bot is already in *${command.slice(1)}* mode`,
+                ...channelInfo
+            });
+            return;
+        }
 
-                try {
-                    // Update access mode
-                    data.isPublic = action === 'public';
-
-                    // Save updated data
-                    fs.writeFileSync('./data/messageCount.json', JSON.stringify(data, null, 2));
-
-                    await sock.sendMessage(chatId, { text: `Bot is now in *${action}* mode`, ...channelInfo });
-                } catch (error) {
-                    console.error('Error updating access mode:', error);
-                    await sock.sendMessage(chatId, { text: 'Failed to update bot access mode', ...channelInfo });
-                }
-                break;
+        data.isPublic = newMode;
+        fs.writeFileSync('./data/messageCount.json', JSON.stringify(data, null, 2));
+        await sock.sendMessage(chatId, { 
+            text: `Bot mode changed to *${command.slice(1)}*`,
+            ...channelInfo
+        });
+    } catch (error) {
+        console.error('Mode change error:', error);
+        await sock.sendMessage(chatId, { text: 'Failed to update bot mode', ...channelInfo });
+    }
+    break;
             case userMessage === '.owner':
                 await ownerCommand(sock, chatId);
                 break;
