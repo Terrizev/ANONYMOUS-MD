@@ -36,8 +36,28 @@ async function aliveCommand(sock, chatId, message) {
 ┃ 🇺🇬                     🇺🇬
 ┗━━━━━━━━━━━━━━━━┛`.trim();
 
-        // Reply to the original message with the bot info
-        await sock.sendMessage(chatId, { text: botInfo, quoted: message });
+        // Send image with caption
+        await sock.sendMessage(chatId, {
+            image: { url: 'https://files.catbox.moe/aid1i4.jpg' },
+            mimetype: 'image/jpeg',
+            caption: botInfo,
+            contextInfo: {
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '120363397100406773@newsletter',
+                    newsletterName: 'Anonymous MD by Terrivez',
+                    serverMessageId: -1
+                }
+            },
+            quoted: message
+        });
+
+        // Send audio as voice note
+        await sock.sendMessage(chatId, {
+            audio: { url: 'https://files.catbox.moe/nkjmd7.m4a' },
+            mimetype: 'audio/mp4',
+            ptt: true,
+            quoted: message
+        });
 
     } catch (error) {
         console.error('Error in alive command:', error);
