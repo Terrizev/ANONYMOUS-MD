@@ -2,7 +2,7 @@ async function githubCommand(sock, chatId) {
     const repoInfo = `*🤖 ANONYMOUS MD*
 
 *📂 GitHub Repository:*
-https://github.com/Terrizev/ANONYMOUS-MD
+https://github.com/Terrizev/ANONYMOUS-MD/fork  
 
 *📢 Official Channel:*
 https://whatsapp.com/channel/0029Vb57ZHh7IUYcNttXEB3y
