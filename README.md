@@ -54,8 +54,8 @@
 
 ### 🙏 Special Thanks 
 
-<a href="https://github.com/sesco001">
-  <img src="https://img.shields.io/badge/Thanks-sesco001-blueviolet?style=for-the-badge&logo=github" alt="follow to sesco001" />
+<a href="https://github.com/Terrizev">
+  <img src="https://img.shields.io/badge/Thanks-Terrizev-blueviolet?style=for-the-badge&logo=github" alt="follow to Terrizev" />
 </a>
 <a href="https://github.com/Terrizev">
   <img src="https://img.shields.io/badge/Owner-Terrizev-blueviolet?style=for-the-badge&logo=github" alt="follow to Terrizev" />
