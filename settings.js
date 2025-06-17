@@ -8,6 +8,6 @@ _0x59f3a2.ownerNumber = '256784670936',
 _0x59f3a2.giphyApiKey = Buffer.from('cW5sN3NzUUNoVGRQanNLdGEyQXgyTE1hR1h6MzAzdHE=', 'base64').toString(),
 _0x59f3a2.commandMode = Buffer.from('cHVibGlj', 'base64').toString(),
 _0x59f3a2.description = Buffer.from('VGhpcyBpcyBhIGJvdCBmb3IgbWFuYWdpbmcgZ3JvdXAgY29tbWFuZHMgYW5kIGF1dG9tYXRpbmcgdGFza3Mu', 'base64').toString(),
-_0x59f3a2.version = Buffer.from('Mi4wLjE=', 'base64').toString(), // Changed from Mi4wLjA= (2.0.0) to Mi4wLjE= (2.0.1)
+_0x59f3a2.version = Buffer.from('My4wLjE=', 'base64').toString(),
 _0x59f3a2.statusReactionEmoji = '🍆';
 module.exports = _0x59f3a2;
