@@ -12,94 +12,89 @@ const ffmpeg = require('fluent-ffmpeg');
 const { addWelcome, delWelcome, isWelcomeOn, addGoodbye, delGoodBye, isGoodByeOn } = require('./lib/index');
 
 // Command imports
-const getppCommand = require('./Anonycmd/getpp');
-const tagAllCommand = require('./Anonycmd/tagall');
-const helpCommand = require('./Anonycmd/help');
-const banCommand = require('./Anonycmd/ban');
-const { promoteCommand } = require('./Anonycmd/promote');
-const { demoteCommand } = require('./Anonycmd/demote');
-const muteCommand = require('./Anonycmd/mute');
-const unmuteCommand = require('./Anonycmd/unmute');
-const stickerCommand = require('./Anonycmd/sticker');
+const tagAllCommand = require('./commands/tagall');
+const helpCommand = require('./commands/kiki');
+const banCommand = require('./commands/ban');
+const { promoteCommand } = require('./commands/promote');
+const { demoteCommand } = require('./commands/demote');
+const muteCommand = require('./commands/mute');
+const unmuteCommand = require('./commands/unmute');
+const stickerCommand = require('./commands/sticker');
 const isAdmin = require('./lib/isAdmin');
-const warnCommand = require('./Anonycmd/warn');
-const warningsCommand = require('./Anonycmd/warnings');
-const ttsCommand = require('./Anonycmd/tts');
-const { tictactoeCommand, handleTicTacToeMove } = require('./Anonycmd/tictactoe');
-const { incrementMessageCount, topMembers } = require('./Anonycmd/topmembers');
-const ownerCommand = require('./Anonycmd/owner');
-const deleteCommand = require('./Anonycmd/delete');
-const { handleAntilinkCommand, handleLinkDetection } = require('./Anonycmd/antilink');
+const warnCommand = require('./commands/warn');
+const warningsCommand = require('./commands/warnings');
+const ttsCommand = require('./commands/tts');
+const { tictactoeCommand, handleTicTacToeMove } = require('./commands/tictactoe');
+const { incrementMessageCount, topMembers } = require('./commands/topmembers');
+const getppCommand = require('./commands/getpp');
+const ownerCommand = require('./commands/owner');
+const deleteCommand = require('./commands/delete');
+const { handleAntilinkCommand, handleLinkDetection } = require('./commands/antilink');
 const { Antilink } = require('./lib/antilink');
-const memeCommand = require('./Anonycmd/meme');
-const tagCommand = require('./Anonycmd/tag');
-const jokeCommand = require('./Anonycmd/joke');
-const quoteCommand = require('./Anonycmd/quote');
-const factCommand = require('./Anonycmd/fact');
-const weatherCommand = require('./Anonycmd/weather');
-const newsCommand = require('./Anonycmd/news');
-const kickCommand = require('./Anonycmd/kick');
-const simageCommand = require('./Anonycmd/simage');
-const attpCommand = require('./Anonycmd/attp');
-const { startHangman, guessLetter } = require('./Anonycmd/hangman');
-const { startTrivia, answerTrivia } = require('./Anonycmd/trivia');
-const { complimentCommand } = require('./Anonycmd/compliment');
-const { insultCommand } = require('./Anonycmd/insult');
-const { eightBallCommand } = require('./Anonycmd/eightball');
-const { lyricsCommand } = require('./Anonycmd/lyrics');
-const { dareCommand } = require('./Anonycmd/dare');
-const { truthCommand } = require('./Anonycmd/truth');
-const { clearCommand } = require('./Anonycmd/clear');
-const pingCommand = require('./Anonycmd/ping');
-const aliveCommand = require('./Anonycmd/alive');
-const blurCommand = require('./Anonycmd/img-blur');
-const welcomeCommand = require('./Anonycmd/welcome');
-const goodbyeCommand = require('./Anonycmd/goodbye');
-const githubCommand = require('./Anonycmd/github');
+const memeCommand = require('./commands/meme');
+const tagCommand = require('./commands/tag');
+const jokeCommand = require('./commands/joke');
+const quoteCommand = require('./commands/quote');
+const factCommand = require('./commands/fact');
+const weatherCommand = require('./commands/weather');
+const newsCommand = require('./commands/news');
+const kickCommand = require('./commands/kick');
+const simageCommand = require('./commands/simage');
+const attpCommand = require('./commands/attp');
+const { startHangman, guessLetter } = require('./commands/hangman');
+const { startTrivia, answerTrivia } = require('./commands/trivia');
+const { complimentCommand } = require('./commands/compliment');
+const { insultCommand } = require('./commands/insult');
+const { eightBallCommand } = require('./commands/eightball');
+const { lyricsCommand } = require('./commands/lyrics');
+const { dareCommand } = require('./commands/dare');
+const { truthCommand } = require('./commands/truth');
+const { clearCommand } = require('./commands/clear');
+const pingCommand = require('./commands/ping');
+const aliveCommand = require('./commands/alive');
+const blurCommand = require('./commands/img-blur');
+const welcomeCommand = require('./commands/welcome');
+const goodbyeCommand = require('./commands/goodbye');
+const githubCommand = require('./commands/github');
 const { handleAntiBadwordCommand, handleBadwordDetection } = require('./lib/antibadword');
-const antibadwordCommand = require('./Anonycmd/antibadword');
-const { handleChatbotCommand, handleChatbotResponse } = require('./Anonycmd/chatbot');
-const takeCommand = require('./Anonycmd/take');
-const { flirtCommand } = require('./Anonycmd/flirt');
-const characterCommand = require('./Anonycmd/character');
-const wastedCommand = require('./Anonycmd/wasted');
-const shipCommand = require('./Anonycmd/ship');
-const groupInfoCommand = require('./Anonycmd/groupinfo');
-const resetlinkCommand = require('./Anonycmd/resetlink');
-const staffCommand = require('./Anonycmd/staff');
-const unbanCommand = require('./Anonycmd/unban');
-const emojimixCommand = require('./Anonycmd/emojimix');
-const { handlePromotionEvent } = require('./Anonycmd/promote');
-const { handleDemotionEvent } = require('./Anonycmd/demote');
-const viewOnceCommand = require('./Anonycmd/viewonce');
-const clearSessionCommand = require('./Anonycmd/clearsession');
-const { autoStatusCommand, handleStatusUpdate } = require('./Anonycmd/autostatus');
-const { simpCommand } = require('./Anonycmd/simp');
-const { stupidCommand } = require('./Anonycmd/stupid');
-const pairCommand = require('./Anonycmd/pair');
-const stickerTelegramCommand = require('./Anonycmd/stickertelegram');
-const textmakerCommand = require('./Anonycmd/textmaker');
-const { handleAntideleteCommand, handleMessageRevocation, storeMessage } = require('./Anonycmd/antidelete');
-const clearTmpCommand = require('./Anonycmd/cleartmp');
-const setProfilePicture = require('./Anonycmd/setpp');
-const instagramCommand = require('./Anonycmd/instagram');
-const facebookCommand = require('./Anonycmd/facebook');
-const playCommand = require('./Anonycmd/play');
-const tiktokCommand = require('./Anonycmd/tiktok');
-const songCommand = require('./Anonycmd/song');
-const aiCommand = require('./Anonycmd/ai');
-const { handleTranslateCommand } = require('./Anonycmd/translate');
-const { handleSsCommand } = require('./Anonycmd/ss');
-const { addCommandReaction, handleAreactCommand } = require('./lib/reactions');
-const { goodnightCommand } = require('./Anonycmd/goodnight');
-const imagineCommand = require('./Anonycmd/imagine');
+const antibadwordCommand = require('./commands/antibadword');
+const { handleChatbotCommand, handleChatbotResponse } = require('./commands/chatbot');
+const takeCommand = require('./commands/take');
+const { flirtCommand } = require('./commands/flirt');
+const characterCommand = require('./commands/character');
+const wastedCommand = require('./commands/wasted');
+const shipCommand = require('./commands/ship');
+const groupInfoCommand = require('./commands/groupinfo');
+const resetlinkCommand = require('./commands/resetlink');
+const staffCommand = require('./commands/staff');
+const unbanCommand = require('./commands/unban');
+const emojimixCommand = require('./commands/emojimix');
+const { handlePromotionEvent } = require('./commands/promote');
+const { handleDemotionEvent } = require('./commands/demote');
+const viewOnceCommand = require('./commands/viewonce');
+const clearSessionCommand = require('./commands/clearsession');
+const { autoStatusCommand, handleStatusUpdate } = require('./commands/autostatus');
+const { simpCommand } = require('./commands/simp');
+const { stupidCommand } = require('./commands/stupid');
+const pairCommand = require('./commands/pair');
+const stickerTelegramCommand = require('./commands/stickertelegram');
+const textmakerCommand = require('./commands/textmaker');
+const { handleAntideleteCommand, handleMessageRevocation, storeMessage } = require('./commands/antidelete');
+const clearTmpCommand = require('./commands/cleartmp');
+const setProfilePicture = require('./commands/setpp');
+const instagramCommand = require('./commands/instagram');
+const facebookCommand = require('./commands/facebook');
+const playCommand = require('./commands/play');
+const tiktokCommand = require('./commands/tiktok');
+const songCommand = require('./commands/song');
+const aiCommand = require('./commands/ai');
 
 
 // Global settings
 global.packname = settings.packname;
 global.author = settings.author;
-global.channelLink = "https://whatsapp.com/channel/0029Va90zAnIHphOuO8Msp3A";
-global.ytch = "Mr Unique Hacker";
+global.channelLink = "https://whatsapp.com/channel/0029Vb5nSebFy722d2NEeU3C";
+global.ytch = "𝙰𝙽𝙾𝙽𝚈𝙼𝙾𝚄𝚂 𝚂𝚄𝙿𝙿𝙾𝚁𝚃";
 
 // Add this near the top of main.js with other global configurations
 const channelInfo = {
@@ -107,8 +102,8 @@ const channelInfo = {
         forwardingScore: 1,
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363161513685998@newsletter',
-            newsletterName: 'KnightBot MD',
+            newsletterJid: '120363397100406773@newsletter',
+            newsletterName:'𝙰𝙽𝙾𝙽𝚈𝙼𝙾𝚄𝚂',
             serverMessageId: -1
         }
     }
@@ -140,10 +135,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let userMessage = message.message?.conversation?.trim().toLowerCase() ||
             message.message?.extendedTextMessage?.text?.trim().toLowerCase() || '';
         userMessage = userMessage.replace(/\.\s+/g, '.').trim();
-
-        // Preserve raw message for commands like .tag that need original casing
-        const rawText = message.message?.conversation?.trim() ||
-            message.message?.extendedTextMessage?.text?.trim() || '';
 
         // Only log command usage
         if (userMessage.startsWith('.')) {
@@ -200,7 +191,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
         // List of owner commands
-        const ownerCommands = ['.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact'];
+        const ownerCommands = ['.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -316,53 +307,57 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 await attpCommand(sock, chatId, message);
                 break;
             case userMessage.startsWith('.mode'):
-                // Check if sender is the owner
-                if (!message.key.fromMe) {
-                    await sock.sendMessage(chatId, { text: 'Only bot owner can use this command!', ...channelInfo });
-                    return;
-                }
-                // Read current data first
-                let data;
-                try {
-                    data = JSON.parse(fs.readFileSync('./data/messageCount.json'));
-                } catch (error) {
-                    console.error('Error reading access mode:', error);
-                    await sock.sendMessage(chatId, { text: 'Failed to read bot mode status', ...channelInfo });
-                    return;
-                }
+    // Read current data
+    let data;
+    try {
+        data = JSON.parse(fs.readFileSync('./data/messageCount.json'));
+    } catch (error) {
+        console.error('Error reading access mode:', error);
+        await sock.sendMessage(chatId, { text: 'Failed to read bot mode status', ...channelInfo });
+        return;
+    }
 
-                const action = userMessage.split(' ')[1]?.toLowerCase();
-                // If no argument provided, show current status
-                if (!action) {
-                    const currentMode = data.isPublic ? 'public' : 'private';
-                    await sock.sendMessage(chatId, {
-                        text: `Current bot mode: *${currentMode}*\n\nUsage: .mode public/private\n\nExample:\n.mode public - Allow everyone to use bot\n.mode private - Restrict to owner only`,
-                        ...channelInfo
-                    });
-                    return;
-                }
+    const currentMode = data.isPublic ? 'public' : 'private';
+    await sock.sendMessage(chatId, {
+        text: `Current bot mode: *${currentMode}*\n\nUse commands:\n.public - Allow everyone to use bot\n.private - Restrict to owner only`,
+        ...channelInfo
+    });
+    break;
 
-                if (action !== 'public' && action !== 'private') {
-                    await sock.sendMessage(chatId, {
-                        text: 'Usage: .mode public/private\n\nExample:\n.mode public - Allow everyone to use bot\n.mode private - Restrict to owner only',
-                        ...channelInfo
-                    });
-                    return;
-                }
+case userMessage.startsWith('.public'):
+case userMessage.startsWith('.private'):
+    // Check if sender is the owner
+    if (!message.key.fromMe) {
+        await sock.sendMessage(chatId, { text: 'Only bot owner can use this command!', ...channelInfo });
+        return;
+    }
 
-                try {
-                    // Update access mode
-                    data.isPublic = action === 'public';
+    // Read current data first
+    let modeData;
+    try {
+        modeData = JSON.parse(fs.readFileSync('./data/messageCount.json'));
+    } catch (error) {
+        console.error('Error reading access mode:', error);
+        await sock.sendMessage(chatId, { text: 'Failed to read bot mode status', ...channelInfo });
+        return;
+    }
 
-                    // Save updated data
-                    fs.writeFileSync('./data/messageCount.json', JSON.stringify(data, null, 2));
+    // Determine the action
+    const action = userMessage.startsWith('.public') ? 'public' : 'private';
 
-                    await sock.sendMessage(chatId, { text: `Bot is now in *${action}* mode`, ...channelInfo });
-                } catch (error) {
-                    console.error('Error updating access mode:', error);
-                    await sock.sendMessage(chatId, { text: 'Failed to update bot access mode', ...channelInfo });
-                }
-                break;
+    try {
+        // Update access mode
+        modeData.isPublic = action === 'public';
+
+        // Save updated data
+        fs.writeFileSync('./data/messageCount.json', JSON.stringify(modeData, null, 2));
+
+        await sock.sendMessage(chatId, { text: `Bot is now in *${action}* mode`, ...channelInfo });
+    } catch (error) {
+        console.error('Error updating access mode:', error);
+        await sock.sendMessage(chatId, { text: 'Failed to update bot access mode', ...channelInfo });
+    }
+    break;
             case userMessage === '.owner':
                 await ownerCommand(sock, chatId);
                 break;
@@ -374,7 +369,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 }
                 break;
             case userMessage.startsWith('.tag'):
-                const messageText = rawText.slice(4).trim();  // use rawText here, not userMessage
+                const messageText = userMessage.slice(4).trim();
                 const replyMessage = message.message?.extendedTextMessage?.contextInfo?.quotedMessage || null;
                 await tagCommand(sock, chatId, senderId, messageText, replyMessage);
                 break;
@@ -480,9 +475,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 const stupidArgs = userMessage.split(' ').slice(1);
                 await stupidCommand(sock, chatId, stupidQuotedMsg, stupidMentionedJid, senderId, stupidArgs);
                 break;
-            case userMessage.startsWith('.getpp'):
-                await getppCommand(sock, chatId, message);
-                break;
             case userMessage === '.dare':
                 await dareCommand(sock, chatId);
                 break;
@@ -574,10 +566,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     return;
                 }
 
-                // Check if sender is admin or bot owner
+                // Check if sender is admin
                 const chatbotAdminStatus = await isAdmin(sock, chatId, senderId);
-                if (!chatbotAdminStatus.isSenderAdmin && !message.key.fromMe) {
-                    await sock.sendMessage(chatId, { text: '*Only admins or bot owner can use this command*', ...channelInfo });
+                if (!chatbotAdminStatus.isSenderAdmin) {
+                    await sock.sendMessage(chatId, { text: '*Only admins can use this command*', ...channelInfo });
                     return;
                 }
 
@@ -630,6 +622,9 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             case userMessage.startsWith('.tg') || userMessage.startsWith('.stickertelegram') || userMessage.startsWith('.tgsticker') || userMessage.startsWith('.telesticker'):
                 await stickerTelegramCommand(sock, chatId, message);
+                break;
+                case userMessage.startsWith('.getpp'):
+                await getppCommand(sock, chatId, message);
                 break;
 
             case userMessage === '.vv':
@@ -718,7 +713,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage === '.setpp':
                 await setProfilePicture(sock, chatId, message);
                 break;
-            case userMessage.startsWith('.instagram') || userMessage.startsWith('.insta') || userMessage.startsWith('.ig'):
+            case userMessage.startsWith('.instagram') || userMessage.startsWith('.igdl') || userMessage.startsWith('.ig'):
                 await instagramCommand(sock, chatId, message);
                 break;
             case userMessage.startsWith('.fb') || userMessage.startsWith('.facebook'):
@@ -736,24 +731,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage.startsWith('.gpt') || userMessage.startsWith('.gemini'):
                 await aiCommand(sock, chatId, message);
                 break;
-            case userMessage.startsWith('.translate') || userMessage.startsWith('.trt'):
-                const commandLength = userMessage.startsWith('.translate') ? 10 : 4;
-                await handleTranslateCommand(sock, chatId, message, userMessage.slice(commandLength));
-                return;
-            case userMessage.startsWith('.ss') || userMessage.startsWith('.ssweb') || userMessage.startsWith('.screenshot'):
-                const ssCommandLength = userMessage.startsWith('.screenshot') ? 11 : (userMessage.startsWith('.ssweb') ? 6 : 3);
-                await handleSsCommand(sock, chatId, message, userMessage.slice(ssCommandLength).trim());
-                break;
-            case userMessage.startsWith('.areact') || userMessage.startsWith('.autoreact') || userMessage.startsWith('.autoreaction'):
-                const isOwner = message.key.fromMe;
-                await handleAreactCommand(sock, chatId, message, isOwner);
-                break;
-            case userMessage === '.goodnight' || userMessage === '.lovenight' || userMessage === '.gn':
-                await goodnightCommand(sock, chatId);
-                break;
-            case userMessage.startsWith('.imagine') || userMessage.startsWith('.flux') || userMessage.startsWith('.dalle'):
-                await imagineCommand(sock, chatId, message);
-                break;
             default:
                 if (isGroup) {
                     // Handle non-command group messages
@@ -764,11 +741,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     await handleBadwordDetection(sock, chatId, message, userMessage, senderId);
                 }
                 break;
-        }
-
-        if (userMessage.startsWith('.')) {
-            // After command is processed successfully
-            await addCommandReaction(sock, message);
         }
     } catch (error) {
         console.error('❌ Error in message handler:', error.message);
@@ -785,14 +757,14 @@ async function handleMessages(sock, messageUpdate, printLog) {
 async function handleGroupParticipantUpdate(sock, update) {
     try {
         const { id, participants, action, author } = update;
-
+        
         // Debug log for group updates
-        /* console.log('Group Update in Main:', {
-             id,
-             participants,
-             action,
-             author
-         });*/
+       /* console.log('Group Update in Main:', {
+            id,
+            participants,
+            action,
+            author
+        });*/
 
         // Check if it's a group
         if (!id.endsWith('@g.us')) return;
@@ -802,7 +774,7 @@ async function handleGroupParticipantUpdate(sock, update) {
             await handlePromotionEvent(sock, id, participants, author);
             return;
         }
-
+        
         // Handle demotion events
         if (action === 'demote') {
             await handleDemotionEvent(sock, id, participants, author);
@@ -824,14 +796,14 @@ async function handleGroupParticipantUpdate(sock, update) {
             for (const participant of participants) {
                 const user = participant.split('@')[0];
                 const formattedMessage = welcomeMessage.replace('{user}', `@${user}`);
-
+                
                 await sock.sendMessage(id, {
                     text: formattedMessage,
                     mentions: [participant]
                 });
             }
         }
-
+        
         // Handle leave events
         if (action === 'remove') {
             // Check if goodbye is enabled for this group
@@ -847,7 +819,7 @@ async function handleGroupParticipantUpdate(sock, update) {
             for (const participant of participants) {
                 const user = participant.split('@')[0];
                 const formattedMessage = goodbyeMessage.replace('{user}', `@${user}`);
-
+                
                 await sock.sendMessage(id, {
                     text: formattedMessage,
                     mentions: [participant]
