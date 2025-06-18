@@ -8,7 +8,7 @@ async function playCommand(sock, chatId, message) {
         
         if (!searchQuery) {
             return await sock.sendMessage(chatId, { 
-                text: "Example: .play Amagulu"
+                text: "Example: .song Amagulu"
             });
         }
 
@@ -22,7 +22,7 @@ async function playCommand(sock, chatId, message) {
 
         // Send loading message
         await sock.sendMessage(chatId, {
-            text: "_Please wait your download is in progress_"
+            text: "```Downloading please wait...```"
         });
 
         // Get the first video result
@@ -42,9 +42,17 @@ async function playCommand(sock, chatId, message) {
         const audioUrl = data.result.downloadUrl;
         const title = data.result.title;
 
-        // Send the audio
+        // Send as PTT audio
         await sock.sendMessage(chatId, {
             audio: { url: audioUrl },
+            mimetype: "audio/mpeg",
+            ptt: true,
+            fileName: `${title}.mp3`
+        }, { quoted: message });
+
+        // Send as regular MP3 file
+        await sock.sendMessage(chatId, {
+            document: { url: audioUrl },
             mimetype: "audio/mpeg",
             fileName: `${title}.mp3`
         }, { quoted: message });
@@ -57,6 +65,6 @@ async function playCommand(sock, chatId, message) {
     }
 }
 
-module.exports = playCommand; 
+module.exports = playCommand;
 
 //*Powered by Anonymous-bot*
