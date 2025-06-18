@@ -1,13 +1,7 @@
-const axios = require('axios');
 const yts = require('yt-search');
-const fetch = require('node-fetch');
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
-const util = require('util');
-const execPromise = util.promisify(exec);
+const axios = require('axios');
 
-async function songCommand(sock, chatId, message) {
+async function playCommand(sock, chatId, message) {
     try {
         const text = message.message?.conversation || message.message?.extendedTextMessage?.text;
         const searchQuery = text.split(' ').slice(1).join(' ').trim();
@@ -26,19 +20,40 @@ async function songCommand(sock, chatId, message) {
             });
         }
 
+        // Send loading message
+        await sock.sendMessage(chatId, {
+            text: "```DOWNLOADING please wait....```"
+        });
+
+        // Get the first video result
         const video = videos[0];
         const videoUrl = video.url;
+        
+        // Format duration (convert seconds to MM:SS)
+        const durationSeconds = video.seconds;
+        const minutes = Math.floor(durationSeconds / 60);
+        const seconds = durationSeconds % 60;
+        const formattedDuration = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        
+        // Format views
+        const views = video.views;
+        const formattedViews = views.toLocaleString();
 
-        // Format message components
-        const formattedDuration = formatDuration(video.duration.seconds);
-        const formattedViews = formatNumber(video.views);
+        // Fetch audio data from API
+        const response = await axios.get(`https://apis-keith.vercel.app/download/dlmp3?url=${videoUrl}`);
+        const data = response.data;
 
-        // Custom message format
-        const ytmsg = `╔═══〔 *𓆩ု᪳ANONYMOUS-𝐌𝐃ှ᪳𓆪* 〕═══❒
-║╭───────────────◆  
-║│ *ANONYMOUS-𝐌𝐃 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐈𝐍𝐆*
-║╰───────────────◆
-╚══════════════════❒
+        if (!data || !data.status || !data.result || !data.result.downloadUrl) {
+            return await sock.sendMessage(chatId, { 
+                text: "Failed to fetch audio from the API. Please try again later."
+            });
+        }
+
+        const audioUrl = data.result.downloadUrl;
+        const title = data.result.title;
+
+        // Create the formatted text
+        const infoText = `
 ╔══════════════════❒
 ║ ⿻ *ᴛɪᴛʟᴇ:*  ${video.title}
 ║ ⿻ *ᴅᴜʀᴀᴛɪᴏɴ:*  ${formattedDuration}
@@ -46,139 +61,25 @@ async function songCommand(sock, chatId, message) {
 ║ ⿻ *ᴀᴜᴛʜᴏʀ:*  ${video.author.name}
 ║ ⿻ *ʟɪɴᴋ:*  ${videoUrl}
 ╚══════════════════❒
-*ғꪮʀ ʏꪮꪊ ғꪮʀ ᴀʟʟ ꪮғ ᴀꜱ 🙂*`;
+> *ANONYMOUS PLAYER*
+        `.trim();
 
-        // Send formatted message
+        // Send the audio with caption
         await sock.sendMessage(chatId, {
-            text: ytmsg
+            audio: { url: audioUrl },
+            mimetype: "audio/mpeg",
+            fileName: `${title}.mp3`,
+            caption: infoText
         }, { quoted: message });
 
-        // Create temp directory if it doesn't exist
-        const tempDir = path.join(__dirname, '../temp');
-        if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir);
-        }
-
-        const tempFile = path.join(tempDir, `${Date.now()}.mp3`);
-        const tempM4a = path.join(tempDir, `${Date.now()}.m4a`);
-
-        try {
-            // Try siputzx API first
-            const siputzxRes = await fetch(`https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(videoUrl)}`);
-            const siputzxData = await siputzxRes.json();
-            
-            if (siputzxData?.data?.dl) {
-                const response = await fetch(siputzxData.data.dl);
-                const buffer = await response.buffer();
-                fs.writeFileSync(tempM4a, buffer);
-                
-                await execPromise(`ffmpeg -i "${tempM4a}" -vn -acodec libmp3lame -ac 2 -ab 128k -ar 44100 "${tempFile}"`);
-                
-                const stats = fs.statSync(tempFile);
-                if (stats.size < 1024) throw new Error('Conversion failed');
-
-                await sock.sendMessage(chatId, {
-                    audio: { url: tempFile },
-                    mimetype: "audio/mpeg",
-                    fileName: `${video.title}.mp3`,
-                    ptt: false
-                }, { quoted: message });
-
-                setTimeout(() => {
-                    [tempFile, tempM4a].forEach(file => {
-                        if (fs.existsSync(file)) fs.unlinkSync(file);
-                    });
-                }, 5000);
-                return;
-            }
-        } catch (e1) {
-            console.error('Siputzx API error:', e1);
-            try {
-                // Try zenkey API
-                const zenkeyRes = await fetch(`https://api.zenkey.my.id/api/download/ytmp3?apikey=zenkey&url=${encodeURIComponent(videoUrl)}`);
-                const zenkeyData = await zenkeyRes.json();
-                
-                if (zenkeyData?.result?.downloadUrl) {
-                    const response = await fetch(zenkeyData.result.downloadUrl);
-                    const buffer = await response.buffer();
-                    fs.writeFileSync(tempM4a, buffer);
-                    
-                    await execPromise(`ffmpeg -i "${tempM4a}" -vn -acodec libmp3lame -ac 2 -ab 128k -ar 44100 "${tempFile}"`);
-                    
-                    const stats = fs.statSync(tempFile);
-                    if (stats.size < 1024) throw new Error('Conversion failed');
-
-                    await sock.sendMessage(chatId, {
-                        audio: { url: tempFile },
-                        mimetype: "audio/mpeg",
-                        fileName: `${video.title}.mp3`,
-                        ptt: false
-                    }, { quoted: message });
-
-                    setTimeout(() => {
-                        [tempFile, tempM4a].forEach(file => {
-                            if (fs.existsSync(file)) fs.unlinkSync(file);
-                        });
-                    }, 5000);
-                    return;
-                }
-            } catch (e2) {
-                console.error('Zenkey API error:', e2);
-                try {
-                    // Try axeel API
-                    const axeelRes = await fetch(`https://api.axeel.my.id/api/download/ytmp3?apikey=axeel&url=${encodeURIComponent(videoUrl)}`);
-                    const axeelData = await axeelRes.json();
-                    
-                    if (axeelData?.result?.downloadUrl) {
-                        const response = await fetch(axeelData.result.downloadUrl);
-                        const buffer = await response.buffer();
-                        fs.writeFileSync(tempM4a, buffer);
-                        
-                        await execPromise(`ffmpeg -i "${tempM4a}" -vn -acodec libmp3lame -ac 2 -ab 128k -ar 44100 "${tempFile}"`);
-                        
-                        const stats = fs.statSync(tempFile);
-                        if (stats.size < 1024) throw new Error('Conversion failed');
-
-                        await sock.sendMessage(chatId, {
-                            audio: { url: tempFile },
-                            mimetype: "audio/mpeg",
-                            fileName: `${video.title}.mp3`,
-                            ptt: false
-                        }, { quoted: message });
-
-                        setTimeout(() => {
-                            [tempFile, tempM4a].forEach(file => {
-                                if (fs.existsSync(file)) fs.unlinkSync(file);
-                            });
-                        }, 5000);
-                        return;
-                    }
-                } catch (e3) {
-                    console.error('Axeel API error:', e3);
-                    throw new Error("All download methods failed");
-                }
-            }
-        }
     } catch (error) {
-        console.error('Song command error:', error);
+        console.error('Error in song command:', error);
         await sock.sendMessage(chatId, { 
-            text: "❌ Failed to download the song. Please try again later or try a different song."
+            text: "Download failed. Please try again later."
         });
     }
 }
 
-function formatDuration(seconds) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    
-    return hours > 0 
-        ? `${hours}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
-        : `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
-}
+module.exports = playCommand;
 
-function formatNumber(num) {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-module.exports = songCommand;
+//*Powered by Anonymous-bot*
