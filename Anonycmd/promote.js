@@ -1,123 +1,83 @@
 const { isAdmin } = require('../lib/isAdmin');
-const { getFormattedDate } = require('../lib/helpers');
 
+// Function to handle manual promotions via command
 async function promoteCommand(sock, chatId, mentionedJids, message) {
+    let userToPromote = [];
+    
+    // Check for mentioned users
+    if (mentionedJids && mentionedJids.length > 0) {
+        userToPromote = mentionedJids;
+    }
+    // Check for replied message
+    else if (message.message?.extendedTextMessage?.contextInfo?.participant) {
+        userToPromote = [message.message.extendedTextMessage.contextInfo.participant];
+    }
+    
+    // If no user found through either method
+    if (userToPromote.length === 0) {
+        await sock.sendMessage(chatId, { 
+            text: '🚫 Please mention or reply to the user to promote!'
+        });
+        return;
+    }
+
     try {
-        const groupMetadata = await sock.groupMetadata(chatId);
-        const promoterJid = sock.user.id;
-        let userToPromote = [];
-
-        // User detection logic
-        if (mentionedJids?.length > 0) {
-            userToPromote = mentionedJids;
-        } else if (message?.message?.extendedTextMessage?.contextInfo?.participant) {
-            userToPromote = [message.message.extendedTextMessage.contextInfo.participant];
-        } else {
-            return await sock.sendMessage(chatId, {
-                text: '⚠️ *Promotion Error*\nPlease mention users or reply to their message!',
-                mentions: []
-            });
-        }
-
-        // Execute promotion
         await sock.groupParticipantsUpdate(chatId, userToPromote, "promote");
-
-        // Generate promotion message
-        const formattedDate = getFormattedDate();
-        const [groupName, promoterName] = await Promise.all([
-            getGroupName(groupMetadata),
-            getUsername(sock, promoterJid)
-        ]);
         
-        const promotedUsers = await Promise.all(
-            userToPromote.map(jid => getUsername(sock, jid))
-        );
+        // Get usernames for each promoted user
+        const usernames = await Promise.all(userToPromote.map(async jid => {
+            return `@${jid.split('@')[0]}`;
+        }));
 
-        const promotionMessage = createPromotionMessage({
-            groupName,
-            promoterName,
-            promotedUsers,
-            date: formattedDate,
-            isManual: true
-        });
-
-        await sock.sendMessage(chatId, {
+        // Get promoter's name
+        const promoterJid = sock.user.id;
+        
+        const promotionMessage = `🎉 *Promotion Alert!*\n\n` +
+            `⬆️ *Promoted:* ${usernames.join(', ')}\n` +
+            `👤 *By:* @${promoterJid.split('@')[0]}\n` +
+            `⏰ ${new Date().toLocaleString()}`;
+            
+        await sock.sendMessage(chatId, { 
             text: promotionMessage,
-            mentions: [...userToPromote, promoterJid],
-            contextInfo: { mentionedJid: [...userToPromote, promoterJid] }
+            mentions: [...userToPromote, promoterJid]
         });
-
     } catch (error) {
-        console.error('Promote command error:', error);
-        await sock.sendMessage(chatId, {
-            text: error.isCommandError ? error.message : '🚨 Failed to promote. Please check permissions!'
-        });
+        console.error('Error in promote command:', error);
+        await sock.sendMessage(chatId, { text: '❌ Failed to promote user(s)!'});
     }
 }
 
+// Function to handle automatic promotion detection
 async function handlePromotionEvent(sock, groupId, participants, author) {
     try {
-        const groupMetadata = await sock.groupMetadata(groupId);
-        const mentionList = [...participants];
-        let promoterName = 'System';
+        // Get usernames for promoted participants
+        const promotedUsernames = await Promise.all(participants.map(async jid => {
+            return `@${jid.split('@')[0]}`;
+        }));
 
-        if (author) {
-            mentionList.push(author);
-            promoterName = await getUsername(sock, author);
+        let promotedBy;
+        let mentionList = [...participants];
+
+        if (author && author.length > 0) {
+            const authorJid = author;
+            promotedBy = `@${authorJid.split('@')[0]}`;
+            mentionList.push(authorJid);
+        } else {
+            promotedBy = '🤖 System';
         }
 
-        const promotedUsers = await Promise.all(
-            participants.map(jid => getUsername(sock, jid))
-        );
-
-        const promotionMessage = createPromotionMessage({
-            groupName: groupMetadata.subject,
-            promoterName,
-            promotedUsers,
-            date: getFormattedDate(),
-            isManual: false
-        });
-
+        const promotionMessage = `🎉 *Promotion Alert!*\n\n` +
+            `⬆️ *Promoted:* ${promotedUsernames.join(', ')}\n` +
+            `👤 *By:* ${promotedBy}\n` +
+            `⏰ ${new Date().toLocaleString()}`;
+        
         await sock.sendMessage(groupId, {
             text: promotionMessage,
-            mentions: mentionList,
-            contextInfo: { mentionedJid: mentionList }
+            mentions: mentionList
         });
-
     } catch (error) {
-        console.error('Promotion event error:', error);
+        console.error('Error handling promotion event:', error);
     }
-}
-
-// Helper functions
-async function getUsername(sock, jid) {
-    try {
-        const contact = await sock.onWhatsApp(jid);
-        return contact[0]?.name || `@${jid.split('@')[0]}`;
-    } catch {
-        return `@${jid.split('@')[0]}`;
-    }
-}
-
-function getGroupName(metadata) {
-    return metadata.subject || 'Unknown Group';
-}
-
-function createPromotionMessage({ groupName, promoterName, promotedUsers, date, isManual }) {
-    const celebrationEmoji = ['🎉', '🎊', '✨', '🌟'][Math.floor(Math.random() * 4)];
-    
-    return `
-${celebrationEmoji} *GROUP PROMOTION NOTICE* ${celebrationEmoji}
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-🏛️ *Group:* ${groupName}
-📅 *Date:* ${date}
-
-👑 *Promoted By:*
-${promoterName}
-
-🚀 *New Admin${promotedUsers.length > 1 ? 's' : ''}:*
-${promotedUsers.map((u, i) => `▸ ${u}`).join('\n')}
-    `.trim();
 }
 
 module.exports = { promoteCommand, handlePromotionEvent };
