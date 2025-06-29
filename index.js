@@ -1,14 +1,4 @@
-/**
- * Anonymous Bot - A WhatsApp Bot
- * Copyright (c) 2025 Terrizev
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the MIT License.
- * 
- * Credits:
- * - Baileys Library by @adiwajshing
- * - Pair Code implementation inspired by TechGod143 & DGXEON
- */
+
 require('./settings')
 const { Boom } = require('@hapi/boom')
 const fs = require('fs')
@@ -30,7 +20,6 @@ const {
     generateWAMessageFromContent,
     generateMessageID,
     downloadContentFromMessage,
-    makeInMemoryStore,
     jidDecode,
     proto,
     jidNormalizedUser,
@@ -45,12 +34,42 @@ const { PHONENUMBER_MCC } = require('@whiskeysockets/baileys/lib/Utils/generics'
 const { rmSync, existsSync } = require('fs')
 const { join } = require('path')
 
-const createToxxicStore = require('./lib/basestore');
-const store = createToxxicStore('./store', {
-  maxMessagesPerChat: 100,  
-  memoryOnly: false 
-});
-    
+// Create a store object with required methods
+const store = {
+    messages: {},
+    contacts: {},
+    chats: {},
+    groupMetadata: async (jid) => {
+        return {}
+    },
+    bind: function(ev) {
+        // Handle events
+        ev.on('messages.upsert', ({ messages }) => {
+            messages.forEach(msg => {
+                if (msg.key && msg.key.remoteJid) {
+                    this.messages[msg.key.remoteJid] = this.messages[msg.key.remoteJid] || {}
+                    this.messages[msg.key.remoteJid][msg.key.id] = msg
+                }
+            })
+        })
+        
+        ev.on('contacts.update', (contacts) => {
+            contacts.forEach(contact => {
+                if (contact.id) {
+                    this.contacts[contact.id] = contact
+                }
+            })
+        })
+        
+        ev.on('chats.set', (chats) => {
+            this.chats = chats
+        })
+    },
+    loadMessage: async (jid, id) => {
+        return this.messages[jid]?.[id] || null
+    }
+}
+
 let phoneNumber = "256784670936"
 let owner = JSON.parse(fs.readFileSync('./data/owner.json'))
 
@@ -125,7 +144,7 @@ async function startXeonBotInc() {
                             forwardingScore: 1,
                             isForwarded: true,
                             forwardedNewsletterMessageInfo: {
-                                newsletterJid: '120363397100406773@newsletter',
+                                newsletterJid: '120363161513685998@newsletter',
                                 newsletterName: '𝙰𝙽𝙾𝙽𝚈𝙼𝙾𝚄𝚂',
                                 serverMessageId: -1
                             }
@@ -184,16 +203,27 @@ async function startXeonBotInc() {
         if (!!global.phoneNumber) {
             phoneNumber = global.phoneNumber
         } else {
-            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number ☛\nFor example: 256784 : `)))
+            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp\nFormat: 256784670936 (without + or spaces) : `)))
         }
 
+        // Clean the phone number - remove any non-digit characters
         phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
 
-        // Request pairing code
+        // Ensure number starts with country code
+        if (!phoneNumber.startsWith('254') && !phoneNumber.startsWith('256')) {
+            phoneNumber = '255' + phoneNumber // Default to Indonesia if no country code
+        }
+
         setTimeout(async () => {
-            let code = await XeonBotInc.requestPairingCode(phoneNumber)
-            code = code?.match(/.{1,4}/g)?.join("-") || code
-            console.log(chalk.black(chalk.bgGreen(`Your Pairing Code☛ : `)), chalk.black(chalk.white(code)))
+            try {
+                let code = await XeonBotInc.requestPairingCode(phoneNumber)
+                code = code?.match(/.{1,4}/g)?.join("-") || code
+                console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)))
+                console.log(chalk.yellow(`\nBᴇ ғᴀsᴛ ɢᴏ Cᴏɴɴᴇᴄᴛ ᴍᴇ ɪ Aᴍ WAITING♛`))
+            } catch (error) {
+                console.error('Error requesting pairing code:', error)
+                console.log(chalk.red('Failed to get pairing code. Please check your phone number and try again.'))
+            }
         }, 3000)
     }
 
@@ -204,29 +234,28 @@ async function startXeonBotInc() {
             console.log(chalk.magenta(` `))
             console.log(chalk.yellow(`🌿Connected to => ` + JSON.stringify(XeonBotInc.user, null, 2)))
             
-            // Send message to bot's own number
             const botNumber = XeonBotInc.user.id.split(':')[0] + '@s.whatsapp.net';
             await XeonBotInc.sendMessage(botNumber, { 
-                text: `𝙰𝙽𝙾𝙽𝚈𝙼𝙾𝚄𝚂 𝙸𝚂 𝙻𝙸𝚅𝙴!\n\n⏰ Time: ${new Date().toLocaleString()}`,
+                text: `AONONYMOUS Is Lɪᴠᴇ Nᴏᴡ😏`,
                 contextInfo: {
                     forwardingScore: 1,
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363397100406773@newsletter',
-                        newsletterName: '𝙰𝙽𝙾𝙽𝚈𝙼𝙾𝚄𝚂',
+                        newsletterJid: '120363161513685998@newsletter',
+                        newsletterName: 'KnightBot MD',
                         serverMessageId: -1
                     }
                 }
             });
 
             await delay(1999)
-            console.log(chalk.yellow(`\n\n                  ${chalk.bold.blue(`[ ${global.botname || '𝘼𝙉𝙊𝙉𝙔𝙈𝙊𝙐𝙎 𝘽𝙊𝙏'} ]`)}\n\n`))
+            console.log(chalk.yellow(`\n\n                  ${chalk.bold.blue(`[ ${global.botname || 'Aɴᴏɴʏᴍᴏᴜs Bᴏᴛ'} ]`)}\n\n`))
             console.log(chalk.cyan(`< ================================================== >`))
-            console.log(chalk.magenta(`\n${global.themeemoji || '•'} YT CHANNEL: 𝘈𝘕𝘖𝘕𝘠𝘔𝘖𝘜𝘚 𝘚𝘜𝘗𝘗𝘖𝘙𝘛`))
-            console.log(chalk.magenta(`${global.themeemoji || '•'} GITHUB: 𝚃𝙴𝚁𝚁𝙸𝚉𝙴𝚅 `))
+            console.log(chalk.magenta(`\n${global.themeemoji || '•'} Aɴᴏɴʏᴍᴏᴜs`))
+            console.log(chalk.magenta(`${global.themeemoji || '•'} GITHUB: Tᴇʀʀɪᴢᴇᴠ`))
             console.log(chalk.magenta(`${global.themeemoji || '•'} WA NUMBER: ${owner}`))
-            console.log(chalk.magenta(`${global.themeemoji || '•'} CREDIT: 𝚄𝚃𝙷𝚄𝙼𝙰𝙽 `))
-            console.log(chalk.green(`${global.themeemoji || '•'} 𝐼 𝐴𝑀 𝐴𝑉𝐼𝐿𝐸 ☘`))
+            console.log(chalk.magenta(`${global.themeemoji || '•'} CREDIT: 𝚃𝙴𝚁𝚁𝙸𝚉𝙴𝚅`))
+            console.log(chalk.green(`${global.themeemoji || '•'}  Bot Connected Successfully! ✅`))
         }
         if (
             connection === "close" &&
@@ -240,25 +269,20 @@ async function startXeonBotInc() {
 
     XeonBotInc.ev.on('creds.update', saveCreds)
     
-    // Modify the event listener to log the update object
     XeonBotInc.ev.on('group-participants.update', async (update) => {
-        //console.log('Group Update Event:', JSON.stringify(update, null, 2));  // Add this line to debug
         await handleGroupParticipantUpdate(XeonBotInc, update);
     });
 
-    // Add status update handlers
     XeonBotInc.ev.on('messages.upsert', async (m) => {
         if (m.messages[0].key && m.messages[0].key.remoteJid === 'status@broadcast') {
             await handleStatus(XeonBotInc, m);
         }
     });
 
-    // Handle status updates
     XeonBotInc.ev.on('status.update', async (status) => {
         await handleStatus(XeonBotInc, status);
     });
 
-    // Handle message reactions (some status updates come through here)
     XeonBotInc.ev.on('messages.reaction', async (status) => {
         await handleStatus(XeonBotInc, status);
     });
@@ -272,16 +296,12 @@ startXeonBotInc().catch(error => {
     console.error('Fatal error:', error)
     process.exit(1)
 })
-
-// Better error handling
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err)
-    // Don't exit immediately to allow reconnection
 })
 
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err)
-    // Don't exit immediately to allow reconnection
 })
 
 let file = require.resolve(__filename)
