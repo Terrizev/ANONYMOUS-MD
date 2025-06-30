@@ -1,25 +1,25 @@
 {
   "name": "𝙰𝙽𝙾𝙽𝚈𝙼𝙾𝚄𝚂 𝙱𝙾𝚃",
-  "version": "3.0.1",
+  "version": "3.0.0",
   "description": "WhatsApp Bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "docker:build": "docker build -t knightbot .",
-    "docker:run": "docker run -e SESSION_ID=$SESSION_ID ᗩᑎOᑎYᗰOᑌՏ~"
+    "docker:run": "docker run -e SESSION_ID=$SESSION_ID ᗩᑎOᑎYᗰOᑌՏ"
   },
   "keywords": [
     "whatsapp-bot"
   ],
-  "author": "",
+  "author": "𝑻𝑬𝑹𝑹𝑰𝒁𝑬𝑽",
   "license": "ISC",
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@hapi/boom": "^10.0.1",
     "@types/node": "^18.0.6",
-"@whiskeysockets/baileys":"github:tonicmeef/XD-Baileys",
+    "@whiskeysockets/baileys": "^6.7.18",
     "awesome-phonenumber": "^5.9.0",
     "axios": "^1.8.4",
     "chalk": "^4.1.2",
