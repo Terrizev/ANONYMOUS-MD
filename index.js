@@ -73,7 +73,7 @@ const store = {
 let phoneNumber = "256784670936"
 let owner = JSON.parse(fs.readFileSync('./data/owner.json'))
 
-global.botname = "𝙰𝙽𝙾𝙽𝚈𝙼𝙾𝚄𝚂 𝙱𝙾𝚃"
+global.botname = "Aɴᴏɴʏᴍᴏᴜs Bᴏᴛ"
 global.themeemoji = "•"
 
 const settings = require('./settings')
@@ -144,8 +144,8 @@ async function startXeonBotInc() {
                             forwardingScore: 1,
                             isForwarded: true,
                             forwardedNewsletterMessageInfo: {
-                                newsletterJid: '120363161513685998@newsletter',
-                                newsletterName: '𝙰𝙽𝙾𝙽𝚈𝙼𝙾𝚄𝚂',
+                                newsletterJid: '120363397100406773@newsletter',
+                                newsletterName: 'Wᴇ Aʀᴇ Aɴᴏɴʏᴍᴏᴜs',
                                 serverMessageId: -1
                             }
                         }
@@ -203,15 +203,17 @@ async function startXeonBotInc() {
         if (!!global.phoneNumber) {
             phoneNumber = global.phoneNumber
         } else {
-            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp\nFormat: 256784670936 (without + or spaces) : `)))
+            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Format: 256784670936 (without + or spaces) : `)))
         }
 
         // Clean the phone number - remove any non-digit characters
         phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
 
-        // Ensure number starts with country code
-        if (!phoneNumber.startsWith('254') && !phoneNumber.startsWith('256')) {
-            phoneNumber = '255' + phoneNumber // Default to Indonesia if no country code
+        // Validate the phone number using awesome-phonenumber
+        const pn = require('awesome-phonenumber');
+        if (!pn('+' + phoneNumber).isValid()) {
+            console.log(chalk.red('Invalid phone number. Please enter your full international number (e.g., 15551234567 for US, 447911123456 for UK, etc.) without + or spaces.'));
+            process.exit(1);
         }
 
         setTimeout(async () => {
@@ -219,7 +221,7 @@ async function startXeonBotInc() {
                 let code = await XeonBotInc.requestPairingCode(phoneNumber)
                 code = code?.match(/.{1,4}/g)?.join("-") || code
                 console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)))
-                console.log(chalk.yellow(`\nBᴇ ғᴀsᴛ ɢᴏ Cᴏɴɴᴇᴄᴛ ᴍᴇ ɪ Aᴍ WAITING♛`))
+                console.log(chalk.yellow(`\nPlease enter this code in your WhatsApp app:`))
             } catch (error) {
                 console.error('Error requesting pairing code:', error)
                 console.log(chalk.red('Failed to get pairing code. Please check your phone number and try again.'))
@@ -236,26 +238,26 @@ async function startXeonBotInc() {
             
             const botNumber = XeonBotInc.user.id.split(':')[0] + '@s.whatsapp.net';
             await XeonBotInc.sendMessage(botNumber, { 
-                text: `AONONYMOUS Is Lɪᴠᴇ Nᴏᴡ😏`,
+                text: `Wᴇ ᴀʀᴇ ANONYMOUS `,
                 contextInfo: {
                     forwardingScore: 1,
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363161513685998@newsletter',
-                        newsletterName: 'KnightBot MD',
+                        newsletterJid: '120363397100406773@newsletter',
+                        newsletterName: '𝙰𝙽𝙾𝙽𝚈𝙼𝙾𝚄𝚂 𝙱𝙾𝚃',
                         serverMessageId: -1
                     }
                 }
             });
 
             await delay(1999)
-            console.log(chalk.yellow(`\n\n                  ${chalk.bold.blue(`[ ${global.botname || 'Aɴᴏɴʏᴍᴏᴜs Bᴏᴛ'} ]`)}\n\n`))
+            console.log(chalk.yellow(`\n\n                  ${chalk.bold.blue(`[ ${global.botname || 'ᗩᑎOᑎYᗰOᑌՏ ᗷOT'} ]`)}\n\n`))
             console.log(chalk.cyan(`< ================================================== >`))
-            console.log(chalk.magenta(`\n${global.themeemoji || '•'} Aɴᴏɴʏᴍᴏᴜs`))
-            console.log(chalk.magenta(`${global.themeemoji || '•'} GITHUB: Tᴇʀʀɪᴢᴇᴠ`))
+            console.log(chalk.magenta(`\n${global.themeemoji || '•'} 𝘼𝙉𝙊𝙉𝙔𝙈𝙊𝙐𝙎 𝙎𝙐𝙋𝙋𝙊𝙍𝙏`))
+            console.log(chalk.magenta(`${global.themeemoji || '•'} GITHUB: 𝘛𝘦𝘳𝘳𝘪𝘻𝘦𝘷`))
             console.log(chalk.magenta(`${global.themeemoji || '•'} WA NUMBER: ${owner}`))
-            console.log(chalk.magenta(`${global.themeemoji || '•'} CREDIT: 𝚃𝙴𝚁𝚁𝙸𝚉𝙴𝚅`))
-            console.log(chalk.green(`${global.themeemoji || '•'}  Bot Connected Successfully! ✅`))
+            console.log(chalk.magenta(`${global.themeemoji || '•'} CREDIT: 𝘛𝘌𝘙𝘙𝘐𝘡𝘌𝘝`))
+            console.log(chalk.green(`${global.themeemoji || '•'} YOUR Bᴏᴛ ɪs ʟIVE❀`))
         }
         if (
             connection === "close" &&
