@@ -8,6 +8,7 @@ const settings = {
   commandMode: "public",
   description: "𝙰𝙳𝚅𝙰𝙽𝙲𝙴𝙳 𝙱𝙾𝚃",
   version: "3.0.1",
+  prefix: "."
 };
 
 module.exports = settings;
