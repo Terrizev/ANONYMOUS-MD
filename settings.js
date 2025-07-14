@@ -7,7 +7,7 @@ const settings = {
   giphyApiKey: 'qnl7ssQChTdPjsKta2Ax2LMaGXz303tq',
   commandMode: "public",
   description: "𝙰𝙳𝚅𝙰𝙽𝙲𝙴𝙳 𝙱𝙾𝚃",
-  version: "3.0.1",
+  version: "4.0.0",
   prefix: "."
 };
 
