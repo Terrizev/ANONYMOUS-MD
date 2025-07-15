@@ -145,7 +145,7 @@ const savetube = {
    }
 };
 
-async function playCommand(sock, chatId, message) {
+async function songCommand(sock, chatId, message) {
     try {
         const text = message.message?.conversation || message.message?.extendedTextMessage?.text;
         const searchQuery = text.split(' ').slice(1).join(' ').trim();
