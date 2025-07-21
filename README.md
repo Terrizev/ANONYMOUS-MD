@@ -1,4 +1,5 @@
 # ❄️  DEPLOY NOW ANONYMOUS-MD BOT IS NOW ACTIVE 
+```RUNNING ON VERSION 4.0.1```
 
 <h3 align="center">"..YOU WANT IT..GO FOR IT..."</h3>
 
