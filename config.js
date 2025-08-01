@@ -20271,7 +20271,6 @@ global.autoRecord = process.env.AUTO_RECORD || false
 
 
 
-
 global.error = ["6666",]
 global.wagc = "https://whatsapp.com/channel/0029Vb57ZHh7IUYcNttXEB3y"
 global.caption = "Aɴᴏɴʏᴍᴏᴜs ᴍᴇᴅɪᴀ"
