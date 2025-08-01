@@ -1,0 +1,70 @@
+{
+    "name": "Aɴᴏɴʏᴍᴏᴜs Bᴏᴛ",
+    "description": "A whatsApp bot with Multi Device support",
+    "repository": "https://github.com/anonphoenix007/CH13",
+    "logo": "https://telegra.ph/file/7aa528767ed96ddc17bc2.jpg",
+    "keywords": ["nodejs", "bot", "whatsapp bot", "whatsapp automation", "multi device"],
+    "env": {
+    "OWNER_NAME": {
+      "description": "enter your owner name here",
+      "value": "Aɴᴏɴʏᴍᴏᴜs MD",
+      "required": true
+    },
+    "BOT_PREFIX": {
+      "description": "Put your bot prefix of desire here",
+      "value": ".",
+      "required": false
+    },
+   "ANTIDELETE": {
+      "description": "type true if you want your bot to detect deleted messages in your dm if else type false",
+      "value": "true",
+      "required": false
+    },
+ "AUTO_TYPE": {
+      "description": "type true if you want your bot to show fake typing in your chats  if else type false",
+      "value": "true",
+      "required": false
+    },
+"AUTO_RECORD": {
+      "description": "type true if you want your bot to show fake recording in your chat if else type false",
+      "value": "false",
+      "required": false
+    },
+   "AUTO_STATUS": {
+      "description": "type true if you want bot to view status if else type false",
+      "value": "true",
+      "required": false
+    },
+    "PACK_NAME": {
+      "description": "type your sticker pack name here",
+      "value": "Anonymous pack",
+      "required": false
+    },
+      "API_KEY": {
+      "description": "insert your heroku api key here ",
+      "value": "",
+      "required": true
+    },
+    "AUTHOR": {
+      "description": "type your author sticker name here",
+      "value": "Aɴᴏɴʏᴍᴏᴜs",
+      "required": false
+    },
+    "SESSION_ID": {
+      "description": "put your session ID here",
+      "value": "anonymous~",
+      "required": true
+    }
+    },
+    "buildpacks": [
+      {
+        "url": "heroku/nodejs"
+    },
+    {
+      "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest"
+    },
+    {
+      "url": "https://github.com/clhuang/heroku-buildpack-webp-binaries.git"
+          }
+     ]
+} 
