@@ -1,23 +1,9 @@
-```ANONYMOUS-MD IS UNDERMAITAINANCE```
+*DEPLOY  ME* 
 
 
 
-
-*Upgrading to Version 5.0.0*
-
-
-> BOT WILL BE READY IN 5HRS
-
-
-> THANKS FOR USING ANONYMOUS BOT
+```GET SESSION_ID  HERE👇👇```
 
 
 
-> thanks for the love
-
-
-
-> continue sharing repo and force repo
-
-
-> *TERRIVEZ*
+https://anonymous-pair-site.vercel.app/
