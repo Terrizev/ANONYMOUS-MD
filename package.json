@@ -4,7 +4,7 @@
   "description": "x",
   "main": "main.js",
   "scripts": {
-   "code": "node main.js",
+   "code": "node Anonymous.js",
         "start": "node index.js"
   },
   "author": "Terrizev",
