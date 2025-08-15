@@ -3,7 +3,7 @@ const chalk = require('chalk')
 if (fs.existsSync('.env')) require('dotenv').config({ path: __dirname+'/.env' })
 
 
-global.SESSION_ID = process.env.SESSION_ID || 'paste it here' 
+global.SESSION_ID = process.env.SESSION_ID || '' 
 
 global.xprefix = process.env.BOT_PREFIX ||'.'
 
