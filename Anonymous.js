@@ -19,6 +19,7 @@ const { exec } = require("child_process");
 const { axios, baileys, chalk, cheerio, FileType, fs, ffmpeg, PhoneNumber, process, moment, ms, util, ytdl,  } = modul;
 const os = require('os');
 const speed = require('performance-now')
+const yts = require('yt-search');
 const sharp = require('sharp');
 const didyoumean = require('didyoumean');
 const similarity = require('similarity')
