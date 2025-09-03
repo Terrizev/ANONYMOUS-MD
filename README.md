@@ -1,48 +1,35 @@
-ANONYMOUS-MD IS BACK ONLINE! 🚀
+ANONYMOUS-MD 🤖
+https://files.catbox.moe/sufl90.jpg
 
-![Anonymous MD Banner]((https://files.catbox.moe/91n3vx.jpg))
+🎉 GREAT NEWS! ANONYMOUS-MD IS NOW BACK ONLINE WITH UPGRADED FEATURES!
+All commands are working perfectly with enhanced performance and new button functionality.
 
-🎉 Exciting News!
+✨ Latest Updates
+✅ All commands fully functional
 
-*ANONYMOUS-MD* is back online with new commands and upgrades! We've added button commands to make your experience even better.
+🆕 Added buttons commands for better UX
 
-Commands
+⚡ Improved performance and stability
 
-OWNER
-- addcase
-- getcase
-- addplugin
-- public
-- self
+🔄 Updated to latest versions
 
-DOWNLOADER
-- tiktok
-- ig
-- ytmp3
-- spotify
+🎨 Enhanced UI/UX design
 
-CONVERTER
-- wm
-- sticker
-- toimg
+🚀 Quick Start
+Fork the Repository
+https://img.shields.io/badge/FORK-REPO-blue?style=for-the-badge&logo=github
 
-GROUP
-- tagall
-- kick
-- promote
+🎯 Command Categories
+👑 Owner Menu - Bot owner management commands
 
-PUSH
-- jpm
-- listgc
+📥 Downloader Menu - Media downloading utilities
 
-QUOTES
-- quotesbacot
-- quoteshacker
+🔄 Convert Menu - File conversion tools
 
-Get Started
+👥 Group Menu - Group management features
 
-[![GitHub Repo]((link unavailable))]((link unavailable))
-[![WhatsApp Channel]((link unavailable))]((link unavailable))
-[![Contact Developer]((link unavailable))]((link unavailable))
+📤 Push Menu - Broadcast functionality
 
-Let me know if you need any further changes! 😊
+💬 Quotes Menu - Inspirational quotes generator
+
+All commands
