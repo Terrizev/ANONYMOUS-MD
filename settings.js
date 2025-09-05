@@ -12,7 +12,7 @@ const fs = require('fs')
 const chalk = require('chalk')
 
 //SETTINGS OWNER\\
-global.ownernumber = "256754550399"
+global.ownernumber = "923130948950"
 global.ownername = "TERRI"
 global.fother = "Aɴᴏɴʏᴍᴏᴜs ᴍᴅ multi device ʙᴏᴛ"
 
