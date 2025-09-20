@@ -125,7 +125,7 @@ addRegisteredUser,
 createSerial, 
 checkRegisteredUser 
 } = require('./lib/register.js')
-
+const wm = global.wm || global.wmarthazy || 'ANONYMOUS MD';
     
 //DATABASE   
 const Premium = JSON.parse(fs.readFileSync("./database/premium.json"))
@@ -201,6 +201,116 @@ const Premium = JSON.parse(fs.readFileSync("./database/premium.json"))
   const isGroupAdmins = participants.filter(p => p.admin === 'admin' || p.admin === 'superadmin').map(p => p.jid || p.id);
   const isAdmins = m?.isGroup ? groupAdmins.includes(m.sender) : false;
   const isGroupOwner = m?.isGroup ? groupOwner === m.sender : false;
+  
+   // --- ANTI-LINK ENFORCEMENT SNIPPET (delete message + kick) ---
+try {
+
+  global.db.data = global.db.data || {};
+  global.db.data.chats = global.db.data.chats || {};
+  if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {};
+
+  const chatSettings = global.db.data.chats[m.chat];
+
+  const linkRegex = /(https?:\/\/chat\.whatsapp\.com\/|https?:\/\/wa\.me\/|https?:\/\/t\.me\/joinchat\/|https?:\/\/t\.me\/|https?:\/\/(www\.)?instagram\.com\/|https?:\/\/(www\.)?facebook\.com\/|https?:\/\/(www\.)?discord\.gg\/|https?:\/\/(www\.)?youtube\.com\/|http:\/\/|https:\/\/)/i;
+
+  const msgText = (typeof body === 'string') ? body : '';
+
+  if (isGroup && chatSettings.antilink && msgText && linkRegex.test(msgText)) {
+   
+    if (isCreator || isAdmins) {
+      
+    } else {
+
+      if (isBotAdmins) {
+        try {
+          await conn.sendMessage(m.chat, { delete: m.key });
+          console.log(`Anti-link: deleted message from ${m.sender} in ${m.chat}`);
+        } catch (delErr) {
+          console.error('Anti-link: failed to delete message:', delErr);
+        }
+      }
+
+      try {
+        await conn.sendMessage(
+          m.chat,
+          { text: `⚠️ Anti-Link: @${m.sender.split('@')[0]} posting links is not allowed in this group.`, mentions: [m.sender] },
+          { quoted: m }
+        );
+      } catch (notifyErr) {
+        console.error('Anti-link: failed to send warning message:', notifyErr);
+      }
+
+      if (isBotAdmins) {
+        try {
+          await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
+          console.log(`Anti-link: removed ${m.sender} from ${m.chat}`);
+        } catch (removeErr) {
+          console.error('Anti-link: failed to remove user:', removeErr);
+          try {
+            await conn.sendMessage(m.chat, { text: `⚠️ Failed to remove user automatically. Please remove them manually.` }, { quoted: m });
+          } catch (_) {}
+        }
+      } else {
+
+        try {
+          await conn.sendMessage(m.chat, { text: '⚠️ I am not an admin — I cannot delete messages or remove users. Please ask a group admin to take action.' }, { quoted: m });
+        } catch (_) {}
+      }
+    }
+    return;
+  }
+} catch (e) {
+  console.error('Anti-link enforcement error:', e);
+}
+//Autotyping / Autorecording / Autoread handler
+// Paste this inside your message handler 
+try {
+  
+  conn.autotyping = !!conn.autotyping;
+  conn.autorecording = !!conn.autorecording;
+  conn.autoread = !!conn.autoread;
+
+
+  const jid = m?.chat || m?.key?.remoteJid;
+  if (jid) {
+  
+    if (conn.autotyping) {
+   
+      conn.sendPresenceUpdate && conn.sendPresenceUpdate('composing', jid).catch((e) => {
+        console.error('autotyping sendPresenceUpdate error:', e);
+      });
+      
+      conn.sendPresenceUpdate && conn.sendPresenceUpdate('paused', jid).catch(() => {});
+    }
+   
+    if (conn.autorecording) {
+      conn.sendPresenceUpdate && conn.sendPresenceUpdate('recording', jid).catch((e) => {
+        console.error('autorecording sendPresenceUpdate error:', e);
+      });
+      conn.sendPresenceUpdate && conn.sendPresenceUpdate('paused', jid).catch(() => {});
+    }
+
+    if (conn.autoread) {
+      try {
+        if (m?.key && !m.key.fromMe) {
+          const participant = m.key.participant || m.sender || undefined;
+          const msgIdArray = m.key.id ? [m.key.id] : [];
+          if (participant && msgIdArray.length) {
+            
+            (conn.sendReadReceipt?.(jid, participant, msgIdArray) || Promise.resolve()).catch((e) => {
+              console.error('autoread sendReadReceipt error:', e);
+            });
+          }
+        }
+      } catch (e) {
+
+        console.error('autoread error:', e);
+      }
+    }
+  }
+} catch (e) {
+  console.error('Auto-presence/read handler error (non-blocking):', e);
+}
         async function getLid(jid) {
             return conn.getLidUser(jid)
         }
@@ -571,16 +681,16 @@ console.log(err)
     return new Date(ms).getFullYear();
   }
   // Time formatter hh:mm:ss
-  function formatJam(date) {
-    let jam = date.getHours().toString().padStart(2, "0");
-    let menit = date.getMinutes().toString().padStart(2, "0");
-    let detik = date.getSeconds().toString().padStart(2, "0");
-    return `${jam}:${menit}:${detik}`;
+  function formathour(date) {
+    let hour = date.getHours().toString().padStart(2, "0");
+    let minute = date.getMinutes().toString().padStart(2, "0");
+    let seconds = date.getSeconds().toString().padStart(2, "0");
+    return `${hour}:${minute}:${seconds}`;
   }
   // Final output
   let futureDescription = `
 📅 *Exchange Update:* ${tanggal(sekarang.getTime())}/${bulan(sekarang.getTime())}/${tahun(sekarang.getTime())}
-🕰 *Kampala Time (WIB):* ${formatJam(sekarang)}`;
+🕰 *Kampala Time (WIB):* ${formathour(sekarang)}`;
     
 //~~~~~~~~~~~~~~~~~SETTING QUOTED~~~~~~~~~~~~~~~~~~~~\\                  
 const fverif = {
@@ -625,7 +735,112 @@ message: {
 sendEphemeral: true
 }}
 }  
-    
+
+const thumb = fs.existsSync('./src/anonyt.jpg') ? fs.readFileSync('./src/anonyt.jpg') : null;
+
+//Fake
+const ftroli = {
+  key: {
+    fromMe: false,
+    participant: "0@s.whatsapp.net",
+    remoteJid: "status@broadcast"
+  },
+  message: {
+    orderMessage: {
+      itemCount: 996842999999,
+      status: 200,
+      thumbnail: thumb,
+      surface: 200,
+      message: botname,
+      orderTitle: ownername,
+      sellerJid: "0@s.whatsapp.net"
+    }
+  },
+  contextInfo: { forwardingScore: 999, isForwarded: true },
+  sendEphemeral: true
+};
+
+const fdoc = {
+  key: { participant: "0@s.whatsapp.net", ...(m.chat ? { remoteJid: "status@broadcast" } : {}) },
+  message: { documentMessage: { title: botname, jpegThumbnail: thumb } }
+};
+
+const fvn = {
+  key: { participant: "0@s.whatsapp.net", ...(m.chat ? { remoteJid: "status@broadcast" } : {}) },
+  message: { audioMessage: { mimetype: "audio/ogg; codecs=opus", seconds: 359996400, ptt: "true" } }
+};
+
+const vero = {
+  key: { participant: "0@s.whatsapp.net", remoteJid: "0@s.whatsapp.net" },
+  message: {
+    groupInviteMessage: {
+      groupJid: "6288213840883-1616169743@g.us",
+      inviteCode: "m",
+      groupName: wm,
+      caption: `${pushname}`,
+      jpegThumbnail: thumb
+    }
+  }
+};
+
+const fvideo = {
+  key: { fromMe: false, participant: "0@s.whatsapp.net", ...(m.chat ? { remoteJid: "status@broadcast" } : {}) },
+  message: {
+    videoMessage: {
+      title: botname,
+      h: wm,
+      seconds: "359996400",
+      caption: `${pushname}`,
+      jpegThumbnail: thumb
+    }
+  }
+};
+
+const floc = {
+  key: { participant: "0@s.whatsapp.net", ...(m.chat ? { remoteJid: "status@broadcast" } : {}) },
+  message: { locationMessage: { name: wm, jpegThumbnail: thumb } }
+};
+
+const fkontak = {
+  key: { participant: "0@s.whatsapp.net", ...(m.chat ? { remoteJid: "status@broadcast" } : {}) },
+  message: {
+    newsletterAdminInviteMessage: {
+      newsletterJid: "120363397100406773@newsletter",
+      newsletterName: "[ANONYMOUS MD🎭]",
+      caption: "TERRI DEV 👑\nANONYMOUS MD",
+      contactMessage: {
+        displayName: ownername,
+        vcard: `BEGIN:VCARD\nVERSION:3.0\nN:XL;${ownername},;;;\nFN:${ownername}\nitem1.TEL;waid=256754550399:256784670936\nitem1.X-ABLabel:Mobile\nEND:VCARD`,
+        jpegThumbnail: thumb
+      },
+      thumbnail: thumb,
+      sendEphemeral: true
+    }
+  }
+};
+
+const fakestatus = {
+  key: { fromMe: false, participant: "0@s.whatsapp.net", ...(m.chat ? { remoteJid: "status@broadcast" } : {}) },
+  message: {
+    imageMessage: {
+      url: "https://mmg.whatsapp.net/d/f/At0x7ZdIvuicfjlf9oWS6A3AR9XPh0P-hZIVPLsI70nM.enc",
+      mimetype: "image/jpeg",
+      caption: wm,
+      fileSha256: "+Ia+Dwib70Y1CWRMAP9QLJKjIJt54fKycOfB2OEZbTU=",
+      fileLength: "28777",
+      height: 1080,
+      width: 1079,
+      mediaKey: "vXmRR7ZUeDWjXy5iQk17TrowBzuwRya0errAFnXxbGc=",
+      fileEncSha256: "sR9D2RS5JSifw49HeBADguI23fWDz1aZu4faWG/CyRY=",
+      directPath: "/v/t62.7118-24/21427642_840952686474581_572788076332761430_n.enc?oh=3f57c1ba2fcab95f2c0bb475d72720ba&oe=602F3D69",
+      mediaKeyTimestamp: "1610993486",
+      jpegThumbnail: thumb,
+      scansSidecar: "1W0XhfaAcDwc7xh1R8lca6Qg/1bB4naFCSngM2LKO2NoP5RI7K+zLw=="
+    }
+  }
+};
+
+// --- end fake templates --- 
  const reply = (teks) => {
     conn.sendMessage(m.chat, { 
         text: teks,
@@ -828,6 +1043,239 @@ const totalFitur = () =>{
                  
 switch (command) {
 
+
+case 'save':
+case 'send':
+case 'sendme': {
+  try {
+    if (!m.quoted) return reply2('*🍁 Please reply to a message (image/video/audio/sticker/document) to save/send.*');
+
+    // Normalize quoted message object
+    const q = m.quoted?.msg || m.quoted?.message || m.quoted;
+    const contentType = getContentType(q) || Object.keys(q || {}).find(k => /Message$/.test(k));
+    if (!contentType) return reply2('❌ Quoted message does not contain downloadable media.');
+
+    
+    const allowed = ['imageMessage', 'videoMessage', 'audioMessage', 'stickerMessage', 'documentMessage'];
+    if (!allowed.includes(contentType)) {
+      // fallback: try to forward as document
+      return reply2('❌ Only image, video, audio, sticker or document are supported.');
+    }
+
+    // Download content (stream -> buffer)
+    const stream = await downloadContentFromMessage(q[contentType], contentType.replace('Message', ''));
+    const chunks = [];
+    for await (const chunk of stream) chunks.push(chunk);
+    const buffer = Buffer.concat(chunks);
+
+    if (!buffer || !buffer.length) return reply2('❌ Failed to download the quoted media (empty buffer).');
+
+    // Extract metadata safely
+    const meta = q[contentType] || {};
+    const caption = (meta.caption || meta.fileName || '').toString();
+    const mimetype = meta.mimetype || '';
+
+    
+    if (contentType === 'imageMessage') {
+      await conn.sendMessage(m.chat, { image: buffer, caption }, { quoted: m });
+    } else if (contentType === 'videoMessage') {
+      await conn.sendMessage(m.chat, { video: buffer, caption }, { quoted: m });
+    } else if (contentType === 'audioMessage') {
+      await conn.sendMessage(m.chat, {
+        audio: buffer,
+        mimetype: mimetype || 'audio/mpeg',
+        ptt: !!meta.ptt
+      }, { quoted: m });
+    } else if (contentType === 'stickerMessage') {
+      // send as sticker
+      await conn.sendMessage(m.chat, { sticker: buffer }, { quoted: m });
+    } else if (contentType === 'documentMessage') {
+      
+      const ext = mimetype && mimetype.includes('/') ? `.${mimetype.split('/')[1].split(';')[0]}` : path.extname(meta.fileName || '') || '.bin';
+      const filename = meta.fileName || getRandomFile(ext);
+      await conn.sendMessage(m.chat, {
+        document: buffer,
+        fileName: filename,
+        mimetype: mimetype || undefined,
+        caption
+      }, { quoted: m });
+    } else {
+
+      const ext = mimetype && mimetype.includes('/') ? `.${mimetype.split('/')[1].split(';')[0]}` : '.bin';
+      const filename = meta.fileName || getRandomFile(ext);
+      await conn.sendMessage(m.chat, {
+        document: buffer,
+        fileName: filename,
+        mimetype: mimetype || undefined,
+        caption
+      }, { quoted: m });
+    }
+
+    // Confirm to user
+    reply2('✅ Saved / Sent successfully.');
+  } catch (err) {
+    console.error('Error in case save/send:', err);
+    reply2('❌ Failed to save/send the quoted media. Check the console for details.');
+  }
+}
+break;
+
+case 'autotyping': {
+  
+  if (!isCreator) return reply2(mess.owner || 'Owner only');
+  const param = (args[0] || '').toLowerCase();
+  if (!param) {
+    return reply2(`AutoTyping is currently: ${conn.autotyping ? 'ON' : 'OFF'}`);
+  }
+  if (['on', 'enable', '1', 'true'].includes(param)) {
+    conn.autotyping = true;
+    reply2('✅ AutoTyping has been enabled');
+  } else if (['off', 'disable', '0', 'false'].includes(param)) {
+    conn.autotyping = false;
+    reply2('⛔ AutoTyping has been disabled');
+  } else {
+    reply2('Invalid parameter. Use: on / off');
+  }
+}
+break;
+
+case 'autoread': {
+   
+  if (!isCreator) return reply2(mess.owner || 'Owner only');
+  const param = (args[0] || '').toLowerCase();
+  if (!param) {
+    return reply2(`AutoRead is currently: ${conn.autoread ? 'ON' : 'OFF'}`);
+  }
+  if (['on', 'enable', '1', 'true'].includes(param)) {
+    conn.autoread = true;
+    reply2('✅ AutoRead has been enabled');
+  } else if (['off', 'disable', '0', 'false'].includes(param)) {
+    conn.autoread = false;
+    reply2('⛔ AutoRead has been disabled');
+  } else {
+    reply2('Invalid parameter. Use: on / off');
+  }
+}
+break;
+
+case 'autorecording': {
+
+  if (!isCreator) return reply2(mess.owner || 'Owner only');
+  const param = (args[0] || '').toLowerCase();
+  if (!param) {
+    return reply2(`AutoRecording is currently: ${conn.autorecording ? 'ON' : 'OFF'}`);
+  }
+  if (['on', 'enable', '1', 'true'].includes(param)) {
+    conn.autorecording = true;
+    reply2('✅ AutoRecording has been enabled');
+  } else if (['off', 'disable', '0', 'false'].includes(param)) {
+    conn.autorecording = false;
+    reply2('⛔ AutoRecording has been disabled');
+  } else {
+    reply2('Invalid parameter. Use: on / off');
+  }
+}
+break;
+
+
+case 'url':
+case 'tourl': {
+  try {
+    
+    const quotedMsg = m.quoted ? m.quoted : m;
+    const mimeType = (quotedMsg.msg || quotedMsg).mimetype || '';
+    if (!mimeType) return reply2('Please reply to an image, video, audio or sticker to convert to URL.');
+
+    // download the media into a Buffer
+    const mediaBuffer = await quotedMsg.download?.() || await downloadContentFromMessage(quotedMsg.msg || quotedMsg, mimeType.replace(/Message$/, ''));
+    // If download returned stream, coerce to Buffer
+    let buffer;
+    if (Buffer.isBuffer(mediaBuffer)) buffer = mediaBuffer;
+    else if (mediaBuffer && typeof mediaBuffer.read === 'function') {
+      // stream -> buffer
+      buffer = await (async () => {
+        const chunks = [];
+        for await (const chunk of mediaBuffer) chunks.push(chunk);
+        return Buffer.concat(chunks);
+      })();
+    } else buffer = Buffer.from(mediaBuffer || []);
+
+    if (!buffer || buffer.length === 0) return reply2('Failed to download media.');
+
+    // determine extension from mime
+    let extension = '';
+    if (mimeType.includes('jpeg') || mimeType.includes('jpg')) extension = '.jpg';
+    else if (mimeType.includes('png')) extension = '.png';
+    else if (mimeType.includes('gif')) extension = '.gif';
+    else if (mimeType.includes('webp')) extension = '.webp';
+    else if (mimeType.includes('mp4') || mimeType.includes('video')) extension = '.mp4';
+    else if (mimeType.includes('audio') || mimeType.includes('mpeg') || mimeType.includes('mp3')) extension = '.mp3';
+    else extension = '';
+
+    // prepare temp filepath
+    const tmpName = `catbox_upload_${Date.now()}${extension}`;
+    const tmpPath = path.join(os.tmpdir(), tmpName);
+    fs.writeFileSync(tmpPath, buffer);
+
+    // prepare form-data and upload to Catbox
+    const FormData = require('form-data');
+    const form = new FormData();
+    // Catbox expects field name 'fileToUpload'
+    form.append('fileToUpload', fs.createReadStream(tmpPath), {
+      filename: `file${extension}`,
+      contentType: mimeType || 'application/octet-stream'
+    });
+    form.append('reqtype', 'fileupload');
+
+    // send upload request
+    const { data } = await axios.post('https://catbox.moe/user/api.php', form, {
+      headers: {
+        ...form.getHeaders()
+      },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity
+    });
+
+    // remove temp file
+    try { fs.unlinkSync(tmpPath); } catch (e) { /* ignore */ }
+
+    if (!data) return reply2('Upload failed: empty response from Catbox.');
+
+    // Catbox normally returns a plain URL string
+    const mediaUrl = (typeof data === 'string') ? data.trim() : (data.url || JSON.stringify(data));
+
+    // determine friendly media type
+    let mediaKind = 'File';
+    if (mimeType.includes('image')) mediaKind = 'Image';
+    else if (mimeType.includes('video')) mediaKind = 'Video';
+    else if (mimeType.includes('audio')) mediaKind = 'Audio';
+    else if (mimeType.includes('webp')) mediaKind = 'Sticker';
+
+    // format size helper
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // send result
+    await reply2(
+      `*${mediaKind} Uploaded Successfully*\n\n` +
+      `*Size:* ${formatBytes(buffer.length)}\n` +
+      `*URL:* ${mediaUrl}\n\n` +
+      `> © Uploaded by ᴛᴇʀʀɪ 💜`
+    );
+
+  } catch (err) {
+    console.error('tourl error:', err);
+    await reply2(`Error: ${err.message || String(err)}`);
+  }
+}
+break;
+
+case 'song':
 case 'play': {
   if (!text) return reply('Please provide a song name or query!\nExample: .play Shape of You');
 
@@ -936,133 +1384,97 @@ case 'playvn': {
 break;
 
 case 'menu': {
-let menu = `
+  try {
+    // Menu text
+    let menu = `
 ──「 ${botname} 」──
 [✦] User Status : ${isCreator ? 'owner' : isPremium ? 'premium' : 'free'}
 [✦] Mode: ${conn.public ? '✱ Public' : '✲ Self'}
 [✦] Prefix: Multi
 [✦] Developer terri 
-[✦] Version: 5.0.0`;
- const buttons = [
- {
- buttonId: ".ping",
- buttonText: { displayText: 'SPEED' }
- }
- ];
- let buttonMessage = {
- image: { url: `https://files.catbox.moe/91n3vx.jpg` },
- caption: `${menu}`,
- contextInfo: {
- forwardingScore: 99,
- isForwarded: true,
- forwardedNewsletterMessageInfo: {
- newsletterName: global.newslettername,
- newsletterJid: "120363397100406773@newsletter"
- }
- },
- footer: global.wmarthazy,
- buttons: buttons,
- viewOnce: true,
- headerType: 4
- };
- const flowActions = [
- {
- buttonId: 'action',
- buttonText: { displayText: 'This Button List' },
- type: 4,
- nativeFlowInfo: {
- name: 'single_select',
- paramsJson: JSON.stringify({
- title: "Anonymous Menu List",
- sections: [
- {
- title: "Anonymous Popular Menu",
- highlight_label: "allmenu",
- rows: [
- {
- header: "show all menu",
- title: "Show All Bot Menu",
- description: "Display the entire bot menu",
- id: ".allmenu"
- },
- {
- header: "show main menu",
- title: "MAIN MENU",
- description: "Display the Main Menu",
- id: ".mainmenu"
- },
- {
- header: "show owner menu",
- title: "OWNER MENU",
- description: "Display the Owner Menu",
- id: ".ownermenu"
- },
- {
- header: "show downloader menu",
- title: "DOWNLOADER MENU",
- description: "Display the Downloader Menu",
- id: ".downloadmenu"
- },
- {
- header: "show maker menu",
- title: "MAKER MENU",
- description: "Display Sticker Maker Menu",
- id: ".stickermenu"
- },
- {
- header: "show bug menu",
- title: "BUG MENU",
- description: "Display the Bug Menu",
- id: ".bugmenu"
- },
- {
- header: "show nfsw menu",
- title: "NFSW MENU",
- description: "Display the NFSW Menu",
- id: ".nfswmenu"
- },
- {
- header: "show cpanel menu",
- title: "CPANEL MENU",
- description: "Display the Cpanel Menu",
- id: ".cpanelmenu"
- }, 
- {
- header: "show group menu",
- title: "GROUP MENU",
- description: "Display the Group Menu",
- id: ".groupmenu"
- }, 
- {
- header: "show convert menu",
- title: "CONVERT MENU",
- description: "Display the Convert Menu",
- id: ".convertmenu"
- }, 
- {
- header: "show push menu",
- title: "PUSH CONTACT MENU",
- description: "Display the Push Contact Menu",
- id: ".pushmenu"
- }, 
- {
- header: "show rpg menu",
- title: "RPG MENU",
- description: "Display the Rpg Menu",
- id: ".rpgmenu"
- }, 
- ]
- }
- ]
- })
- },
- viewOnce: false
- } 
- ];
- buttonMessage.buttons.push(...flowActions);
- await conn.sendMessage(m.chat, buttonMessage, { quoted: m });
-};
-break
+[✦] Version: 5.0.1`;
+
+    // Basic button
+    const buttons = [
+      {
+        buttonId: ".ping",
+        buttonText: { displayText: "SPEED" },
+      },
+    ];
+
+    // Build button message (menu)
+    let buttonMessage = {
+      image: { url: `https://files.catbox.moe/91n3vx.jpg` },
+      caption: `${menu}`,
+      contextInfo: {
+        forwardingScore: 99,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterName: global.newslettername,
+          newsletterJid: "120363397100406773@newsletter",
+        },
+      },
+      footer: global.wmarthazy,
+      buttons: buttons,
+      viewOnce: true,
+      headerType: 4,
+    };
+
+    const flowActions = [
+      {
+        buttonId: "action",
+        buttonText: { displayText: "This Button List" },
+        type: 4,
+        nativeFlowInfo: {
+          name: "single_select",
+          paramsJson: JSON.stringify({
+            title: "Anonymous Menu List",
+            sections: [
+              {
+                title: "Anonymous Popular Menu",
+                highlight_label: "allmenu",
+                rows: [
+                  { header: "show all menu", title: "Show All Bot Menu", description: "Display the entire bot menu", id: ".allmenu" },
+                  { header: "show main menu", title: "MAIN MENU", description: "Display the Main Menu", id: ".mainmenu" },
+                  { header: "show owner menu", title: "OWNER MENU", description: "Display the Owner Menu", id: ".ownermenu" },
+                  { header: "show downloader menu", title: "DOWNLOADER MENU", description: "Display the Downloader Menu", id: ".downloadmenu" },
+                  { header: "show maker menu", title: "MAKER MENU", description: "Display Sticker Maker Menu", id: ".stickermenu" },
+                  { header: "show bug menu", title: "BUG MENU", description: "Display the Bug Menu", id: ".bugmenu" },
+                  { header: "show nfsw menu", title: "NFSW MENU", description: "Display the NFSW Menu", id: ".nfswmenu" },
+                  { header: "show group menu", title: "GROUP MENU", description: "Display the Group Menu", id: ".groupmenu" },
+                  { header: "show convert menu", title: "CONVERT MENU", description: "Display the Convert Menu", id: ".convertmenu" }
+                ]
+              }
+            ]
+          })
+        },
+        viewOnce: false
+      }
+    ];
+
+    buttonMessage.buttons.push(...flowActions);
+
+    // 1) Send menu first (fast)
+    await conn.sendMessage(m.chat, buttonMessage, { quoted: fkontak });
+
+    const audioList = [
+      'https://files.catbox.moe/cl759x.mp3',
+      'https://files.catbox.moe/j2lpk3.mp3'
+    ];
+    const audioChoice = pickRandom(audioList);
+
+    await conn.sendMessage(m.chat, {
+      audio: { url: audioChoice },
+      mimetype: "audio/mpeg",
+      ptt: true
+    }, { quoted: fvn });
+
+  } catch (err) {
+    console.error('menu error:', err);
+    reply2('❌ Failed to send menu. Check console for details.');
+  }
+}
+break;
 
 case "runtime": {
    let lowq = `*Anonymous MD has been online for:*\n${runtime(
@@ -2733,555 +3145,6 @@ if (!isRegistered) return daftar(`you haven't registered, please register to use
  });
  }
  break;
-
-
-case "1gb": case "2gb": case "3gb": case "4gb": case "5gb": case "6gb": case "7gb": case "8gb": case "9gbb": case "10gb": {
- if (!isCreator && !isPremium ) return reply(mess.premium)
-if (global.apikey.length < 1) return reply("API key not found!")
-if (!args[0]) return reply(example("name,6283XXX"))
-if (!text.split(",")) return reply(example("name,6283XXX"))
-var buyyer = text.split(",")[0].toLowerCase()
-if (!buyyer) return reply(example("name,6283XXX"))
-var ceknya = text.split(",")[1]
-if (!ceknya) return reply(example("name,6283XXX"))
-var client = text.split(",")[1].replace(/[^0-9]/g, '')+'@s.whatsapp.net'
-var check = await conn.onWhatsApp(ceknya)
-if (!check[0].exists) return reply("Buyer number is not valid!")
-global.panel2 = [buyyer, client]
-var ram
-var disknya
-var cpu
-if (command == "1gb") {
-ram = "1125"
-disknya = "1125"
-cpu = "40"
-} else if (command == "2gb") {
-ram = "2125"
-disknya = "2125"
-cpu = "60"
-} else if (command == "3gb") {
-ram = "3125"
-disknya = "3125"
-cpu = "80"
-} else if (command == "4gb") {
-ram = "4125"
-disknya = "4125"
-cpu = "100"
-} else if (command == "5gb") {
-ram = "5125"
-disknya = "5125"
-cpu = "120"
-} else if (command == "6gb") {
-ram = "6125"
-disknya = "6125"
-cpu = "140"
-} else if (command == "7gb") {
-ram = "7125"
-disknya = "7125"
-cpu = "160"
-} else if (command == "8gb") {
-ram = "8125"
-disknya = "8125"
-cpu = "180"
-} else if (command == "9gb") {
-ram = "9124"
-disknya = "9125"
-cpu = "200"
-} else if (command == "10gb") {
-ram = "10125"
-disknya = "10125"
-cpu = "220"
-}
-let username = global.panel2[0].toLowerCase()
-let email = username+"@gmail.com"
-let name = username
-let password = username + crypto.randomBytes(2).toString('hex')
-let f = await fetch(domain + "/api/application/users", {
-"method": "POST",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey
-},
-"body": JSON.stringify({
-"email": email,
-"username": username.toLowerCase(),
-"first_name": name,
-"last_name": "Server",
-"language": "en",
-"password": password
-})
-})
-let data = await f.json();
-if (data.errors) return reply(JSON.stringify(data.errors[0], null, 2))
-let user = data.attributes
-let desc = tanggal(Date.now())
-let usr_id = user.id
-let f1 = await fetch(domain + "/api/application/nests/5/eggs/" + egg, {
-"method": "GET",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey
-}
-})
-let data2 = await f1.json();
-let startup_cmd = data2.attributes.startup
-let f2 = await fetch(domain + "/api/application/servers", {
-"method": "POST",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey,
-},
-"body": JSON.stringify({
-"name": name,
-"description": desc,
-"user": usr_id,
-"egg": parseInt(egg),
-"docker_image": "ghcr.io/parkervcp/yolks:nodejs_18",
-"startup": startup_cmd,
-"environment": {
-"INST": "npm",
-"USER_UPLOAD": "0",
-"AUTO_UPDATE": "0",
-"CMD_RUN": "npm start"
-},
-"limits": {
-"memory": ram,
-"swap": 0,
-"disk": disknya,
-"io": 500,
-"cpu": cpu
-},
-"feature_limits": {
-"databases": 5,
-"backups": 5,
-"allocations": 5
-},
-deploy: {
-locations: [parseInt(loc)],
-dedicated_ip: false,
-port_range: [],
-},
-})
-})
-let result = await f2.json()
-if (result.errors) return reply(JSON.stringify(result.errors[0], null, 2))
-let server = result.attributes
-await reply(`*Successfully Created Panel Account ✅*
-
-* *User ID :* ${user.id}
-* *Server ID :* ${server.id}
-* *Name :* ${name} Server
-* *Ram :* ${ram == "10125" ? "10Gb" : ram.charAt(0) + "GB"}
-* *CPU :* ${cpu == "220" ? "220%" : cpu+"%"}
-* *Storage :* ${disknya == "10125" ? "10Gb" : disknya.charAt(0) + "GB"}
-* *Created :* ${desc}
-Account data has been sent to number ${global.panel2[1].split('@')[0]}`)
-var teks = `_Here's the Panel Package_ 📦
-* *👤Username :* ${user.username}
-* *🔐Password :* ${password.toString()}
-* *🔗Login Link :* ${global.domain}
-
-_*NOTE!!*_
-> *Seller only provides data once, lost? Your fault*
-> *To claim warranty, screenshot the transaction is required*
-> *7-day warranty*
-> *Do not run/use DDoS-related scripts*
-> *Hope you subscribe*
-`
-conn.sendMessage(global.panel2[1],{text: teks }, { quoted: qkontak })
-}
-break;
-
-case "listserver": case "listsrv": {
- if (!isCreator) return reply(mess.creator) 
- let page = args[0] ? args[0] : '1';
- let f = await fetch(domain + "/api/application/servers?page=" + page, {
- "method": "GET",
- "headers": {
- "Accept": "application/json",
- "Content-Type": "application/json",
- "Authorization": "Bearer " + apikey
- }
- });
- let res = await f.json();
- let servers = res.data;
- let sections = [];
- let messageText = "\n*乂 Pterodactyl Panel Server List 乂*\n\n";
- 
- for (let server of servers) {
- let s = server.attributes;
- 
- let f3 = await fetch(domain + "/api/client/servers/" + s.uuid.split`-`[0] + "/resources", {
- "method": "GET",
- "headers": {
- "Accept": "application/json",
- "Content-Type": "application/json",
- "Authorization": "Bearer " + capikey
- }
- });
- 
- let data = await f3.json();
- let status = data.attributes ? data.attributes.current_state : s.status;
- 
- messageText += `- Server ID: *${s.id}*\n`;
- messageText += `- Server Name: *${s.name}*\n`;
- messageText += `- Status: *${status}*\n`;
- messageText += `- Ram : *${s.limits.memory == 0 ? "Unlimited" : s.limits.memory.toString().length > 4 ? s.limits.memory.toString().split("").slice(0,2).join("") + "GB" : s.limits.memory.toString().length < 4 ? s.limits.memory.toString().charAt(1) + "GB" : s.limits.memory.toString().charAt(0) + "GB"}*
-- CPU : *${s.limits.cpu == 0 ? "Unlimited" : s.limits.cpu.toString() + "%"}*
-- Disk : *${s.limits.disk == 0 ? "Unlimited" : s.limits.disk.length > 3 ? s.limits.disk.toString().charAt(1) + "GB" : s.limits.disk.toString().charAt(0) + "GB"}*
-- Created : ${s.created_at.split("T")[0]}\n\n`
- }
- 
- messageText += `Page: ${res.meta.pagination.current_page}/${res.meta.pagination.total_pages}\n`;
- messageText += `Total Server: ${res.meta.pagination.count}`;
- 
- await conn.sendMessage(m.chat, { text: messageText }, { quoted: qkontak });
- 
- if (res.meta.pagination.current_page < res.meta.pagination.total_pages) {
- reply(`Use the command ${prefix}listsrv ${res.meta.pagination.current_page + 1} to view the next page.`);
- } 
-}
-break;
-
-case "delsrv": case "delserver": {
- if (!isCreator) return reply(mess.creator) 
-let srv = args[0]
-if (!srv) return reply('Where is the ID?')
-let f = await fetch(domain + "/api/application/servers/" + srv, {
-"method": "DELETE",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey,
-}
-})
-let res = f.ok ? {
-errors: null
-} : await f.json()
-if (res.errors) return reply('*SERVER NOT FOUND*')
-reply("_`Successfully Deleted Server`_✅")
-}
- break
-
-case "listuser": case "listusr": {
-if (!isCreator) return reply(mess.creator) 
- let page = args[0] ? args[0] : '1';
- let f = await fetch(domain + "/api/application/users?page=" + page, {
- "method": "GET",
- "headers": {
- "Accept": "application/json",
- "Content-Type": "application/json",
- "Authorization": "Bearer " + apikey
- }
- });
- let res = await f.json();
- let users = res.data;
- let messageText = "\n*Pterodactyl Panel User List*\n\n";
- 
- for (let user of users) {
- let u = user.attributes;
- messageText += `- ID: *${u.id}* 
-- Status: *${u.attributes?.user?.server_limit === null ? 'Inactive' : 'Active'}*\n`;
- messageText += `- *${u.username}*\n`;
- messageText += `- *${u.first_name} ${u.last_name}*\n\n`;
- }
- 
- messageText += `Page: ${res.meta.pagination.current_page}/${res.meta.pagination.total_pages}\n`;
- messageText += `Total Users: ${res.meta.pagination.count}`;
- 
- await conn.sendMessage(m.chat, { text: messageText }, { quoted: qkontak });
- 
- if (res.meta.pagination.current_page < res.meta.pagination.total_pages) {
- reply(`Use the command ${prefix}listusr ${res.meta.pagination.current_page + 1} to view the next page.`);
- }
-}
-break;
-
-case "deluser": {
-if (!isCreator) return reply(mess.creator) 
-let usr = args[0]
-if (!usr) return reply('Where is the ID?')
-let f = await fetch(domain + "/api/application/users/" + usr, {
-"method": "DELETE",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey
-}
-})
-let res = f.ok ? {
-errors: null
-} : await f.json()
-if (res.errors) return reply('*USER NOT FOUND*')
-reply("_`Successfully Deleted User`_ ✅")
-} 
-break
-
-case "listadmin": {
-if (!isCreator) return reply(mess.creator) 
-let cek = await fetch(domain + "/api/application/users?page=1", {
-"method": "GET",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey
-}
-})
-let res2 = await cek.json();
-let users = res2.data;
-if (users.length < 1 ) return reply("No panel admins found")
-var teks = " *乂 Pterodactyl Panel Admin List 乂*\n"
-await users.forEach((i) => {
-if (i.attributes.root_admin !== true) return
-teks += `\n* ID : *${i.attributes.id}*
-* Name : *${i.attributes.first_name}*
-* Created : ${i.attributes.created_at.split("T")[0]}\n`
-})
-await conn.sendMessage(m.chat, { text: teks }, { quoted: qkontak });
-}
-break
-
-case "deladmin": {
-if (!isCreator) return reply(mess.creator) 
-if (!args[0]) return reply("Where is the ID?") 
-let cek = await fetch(domain + "/api/application/users?page=1", {
-"method": "GET",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey
-}
-})
-let res2 = await cek.json();
-let users = res2.data;
-let getid = null
-let idadmin = null
-await users.forEach(async (e) => {
-if (e.attributes.id == args[0] && e.attributes.root_admin == true) {
-getid = e.attributes.username
-idadmin = e.attributes.id
-let delusr = await fetch(domain + `/api/application/users/${idadmin}`, {
-"method": "DELETE",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey
-}
-})
-let res = delusr.ok ? {
-errors: null
-} : await delusr.json()
-}
-})
-if (idadmin == null) return reply("Panel admin account not found!")
-reply("_`Successfully Deleted Admin User`_ ✅")
-}
-break
-
-case "cadmin": {
-if (!isCreator) return reply(mess.creator) 
-let s = q.split(',')
-let email = s[0];
-let username = s[0]
-let nomor = s[1]
-if (s.length < 2) return reply(`*Wrong format!*\nUsage:\n${prefix + command} user,number`)
-if (!username) return reply(`Ex : ${prefix+command} Username,@tag/number\n\nExample :\n${prefix+command} example,@user`)
-if (!nomor) return reply(`Ex : ${prefix+command} Username,@tag/number\n\nExample :\n${prefix+command} example,@user`)
-if (!text.split(",")) return reply(example("name,6283XXX"))
-var buyyer = text.split(",")[0].toLowerCase()
-if (!buyyer) return reply(example("name,6283XXX"))
-var ceknya = text.split(",")[1]
-if (!ceknya) return reply(example("name,6283XXX"))
-var client = text.split(",")[1].replace(/[^0-9]/g, '')+'@s.whatsapp.net'
-var check = await Lexzy.onWhatsApp(ceknya)
-if (!check[0].exists) return reply("Buyer number is not valid!")
-global.panel2 = [buyyer, client]
-let password = username + crypto.randomBytes(2).toString('hex')
-let nomornya = nomor.replace(/[^0-9]/g, '')+'@s.whatsapp.net'
-let f = await fetch(domain + "/api/application/users", {
-"method": "POST",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey
-},
-"body": JSON.stringify({
-"email": username + "@gmail.com",
-"username": username,
-"first_name": username,
-"last_name": "Admin",
-"language": "en",
- "root_admin" : true, 
-"password": password.toString()
-})
-
-})
-
-let data = await f.json();
-
-if (data.errors) return reply(JSON.stringify(data.errors[0], null, 2));
-
-let user = data.attributes
-
-let tks = `
-TYPE: USER
-
-ID: ${user.id}
-USERNAME: ${user.username}
-EMAIL: ${user.email}
-NAME: ${user.first_name} ${user.last_name}
-CREATED AT: ${user.created_at}
-`
- const listMessage = {
- text: tks,
- }
- await conn.sendMessage(m.chat, listMessage)
-var teks = `Here's the Admin Panel Package 📦
-* *👤Username :* ${user.username}
-* *🔐Password :* ${password.toString()}
-* *🔗Login Link :* ${global.domain} 
-
-*Guide to create panel :* https://files.catbox.moe/91ig9h.mp4
-*Guide to install sc bot cpanel :* https://files.catbox.moe/d7l684.mp4
-
-*Note !!*
-> Do not share free panel
-> Do not distribute panel data
-> Do not share panel links
-> Do not create admin panel accounts
-> Do not run scripts related to DDoS
-> *Data is sent only once. Lost? Your fault*
-> *7 day warranty*
-`
-conn.sendMessage(global.panel2[1],{text: teks }, { quoted: qkontak })
-}
-
-break;
-
-case "unli": {
- if (!isCreator && isPremium ) return reply("Sorry you are not registered as premium to access the panel")
-if (global.apikey.length < 1) return reply("API key not found!")
-if (!args[0]) return reply(example("name,6283XXX"))
-if (!text.split(",")) return reply(example("name,6283XXX"))
-var buyyer = text.split(",")[0].toLowerCase()
-if (!buyyer) return reply(example("name,6283XXX"))
-var ceknya = text.split(",")[1]
-if (!ceknya) return reply(example("name,6283XXX"))
-var client = text.split(",")[1].replace(/[^0-9]/g, '')+'@s.whatsapp.net'
-var check = await Lexzy.onWhatsApp(ceknya)
-if (!check[0].exists) return reply("Buyer number is not valid!")
-global.panel2 = [buyyer, client]
-var ram
-var disknya
-var cpu
-ram = "0"
-disknya = "0"
-cpu = "0"
-let username = global.panel2[0].toLowerCase()
-let email = username+"@gmail.com"
-let name = username
-let password = username + crypto.randomBytes(2).toString('hex')
-let f = await fetch(domain + "/api/application/users", {
-"method": "POST",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey
-},
-"body": JSON.stringify({
-"email": email,
-"username": username.toLowerCase(),
-"first_name": name,
-"last_name": "Server",
-"language": "en",
-"password": password
-})
-})
-let data = await f.json();
-if (data.errors) return reply(JSON.stringify(data.errors[0], null, 2))
-let user = data.attributes
-let desc = tanggal(Date.now())
-let usr_id = user.id
-let f1 = await fetch(domain + "/api/application/nests/5/eggs/" + egg, {
-"method": "GET",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey
-}
-})
-let data2 = await f1.json();
-let startup_cmd = data2.attributes.startup
-let f2 = await fetch(domain + "/api/application/servers", {
-"method": "POST",
-"headers": {
-"Accept": "application/json",
-"Content-Type": "application/json",
-"Authorization": "Bearer " + apikey,
-},
-"body": JSON.stringify({
-"name": name,
-"description": desc,
-"user": usr_id,
-"egg": parseInt(egg),
-"docker_image": "ghcr.io/parkervcp/yolks:nodejs_18",
-"startup": startup_cmd,
-"environment": {
-"INST": "npm",
-"USER_UPLOAD": "0",
-"AUTO_UPDATE": "0",
-"CMD_RUN": "npm start"
-},
-"limits": {
-"memory": ram,
-"swap": 0,
-"disk": disknya,
-"io": 500,
-"cpu": cpu
-},
-"feature_limits": {
-"databases": 5,
-"backups": 5,
-"allocations": 5
-},
-deploy: {
-locations: [parseInt(loc)],
-dedicated_ip: false,
-port_range: [],
-},
-})
-})
-let result = await f2.json()
-if (result.errors) return reply(JSON.stringify(result.errors[0], null, 2))
-let server = result.attributes
-await reply(`*Successfully Created Panel Account ✅*
-
-* *User ID :* ${user.id}
-* *Server ID :* ${server.id}
-* *Name :* ${name} Server
-* *Ram :* ${ram == "0" ? "UNLIMITED" : ram.charAt(0) + "GB"}
-* *CPU :* ${cpu == "0" ? "UNLIMITED" : cpu+"%"}
-* *Storage :* ${disknya == "0" ? "UNLIMITED" : disknya.charAt(0) + "GB"}
-* *Created :* ${desc}
-Account data has been sent to number ${global.panel2[1].split('@')[0]}`)
-var teks = `_Here's the Panel Package_ 📦
-* *👤Username :* ${user.username}
-* *🔐Password :* ${password.toString()}
-* *🔗Login Link :* ${global.domain}
-
-_*NOTE!!*_
-> *Seller only provides data once, lost? Your fault*
-> *To claim warranty, screenshot the transaction is required*
-> *7-day warranty*
-> *Do not run/use DDoS-related scripts*
-> *Hope you subscribe 🥰*
-`
-conn.sendMessage(global.panel2[1],{text: teks }, { quoted: qkontak })
-}
-break;
 
 case "pin": case "pinterest": {
 if (!text) return m.reply('example:\n.pin ouka shiunji')
