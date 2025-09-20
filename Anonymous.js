@@ -829,18 +829,43 @@ const totalFitur = () =>{
 switch (command) {
 
 case 'play': {
-  if (!isRegistered) return daftar(`You are not registered, register to use bot features\nhow to register .daftar name.age\nlike this Terri.15`);
   if (!text) return reply('Please provide a song name or query!\nExample: .play Shape of You');
 
   try {
     await conn.sendMessage(m.chat, { react: { text: "🎵", key: m.key } });
 
-    const apiUrl = `https://api.diioffc.web.id/api/search/ytplay?query=${encodeURIComponent(text)}`;
-    const { data } = await axios.get(apiUrl);
+    // Search for the video using yt-search
+    const searchResults = await yts(text);
+    
+    if (!searchResults || searchResults.videos.length === 0) {
+      return reply('No results found. Try another query.');
+    }
 
-    if (!data.status || !data.result) return reply('Failed to fetch song. Try another query.');
+    // Get the first result
+    const video = searchResults.videos[0];
+    
+    // Now get the download URL using the API
+    const downloadUrl = `https://api.nekolabs.my.id/downloader/youtube/v1?url=${encodeURIComponent(video.url)}&format=mp3`;
+    const downloadResponse = await axios.get(downloadUrl);
+    
+    if (!downloadResponse.data.status || !downloadResponse.data.result) {
+      return reply('Failed to fetch song. Try another query.');
+    }
 
-    const res = data.result;
+    const res = {
+      title: video.title,
+      author: { name: video.author.name },
+      url: video.url,
+      duration: { timestamp: video.duration.timestamp },
+      views: video.views,
+      ago: video.ago,
+      thumbnail: video.thumbnail,
+      download: {
+        url: downloadResponse.data.result.downloadUrl,
+        filename: `${video.title}.mp3`
+      }
+    };
+
     // Store last search result for button handlers (per chat)
     global.lastPlayResult = global.lastPlayResult || {};
     global.lastPlayResult[m.chat] = res;
@@ -876,7 +901,6 @@ case 'play': {
 break;
 
 case 'playdoc': {
-  if (!isRegistered) return daftar('You are not registered, register to use bot features');
   let res = global.lastPlayResult?.[m.chat];
   if (!res) return reply('No song found. Use .play <songname> first.');
   await conn.sendMessage(m.chat, {
@@ -889,7 +913,6 @@ case 'playdoc': {
 break;
 
 case 'playaudio': {
-  if (!isRegistered) return daftar('You are not registered, register to use bot features');
   let res = global.lastPlayResult?.[m.chat];
   if (!res) return reply('No song found. Use .play <songname> first.');
   await conn.sendMessage(m.chat, {
@@ -901,7 +924,6 @@ case 'playaudio': {
 break;
 
 case 'playvn': {
-  if (!isRegistered) return daftar('You are not registered, register to use bot features');
   let res = global.lastPlayResult?.[m.chat];
   if (!res) return reply('No song found. Use .play <songname> first.');
   await conn.sendMessage(m.chat, {
@@ -3509,12 +3531,10 @@ fs.readFile(namaFile, 'utf8', (err, data) => {
 break
 
 case 'ping': {
-    if (!isRegistered) return daftar(`you haven't registered, please register to use bot features\nhow to register .daftar name.age\nlike this Terri.15`)
-    const initialMessage = await reply("pong")
-    const os = require('os') 
     const start = performance.now();
+    await reply("pong");
     const speed = (performance.now() - start).toFixed(3);
-    await initialMessage.edit(`Anonymous speed ${speed}`)
+    await reply(`Anonymous speed ${speed}`);
 }
 break
 
