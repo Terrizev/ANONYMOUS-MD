@@ -1,4 +1,3 @@
-
 const fs = require('fs')
 const chalk = require('chalk')
 
@@ -36,16 +35,18 @@ global.mess = {
     wait: 'Hold on bro, we\'re processing it first'
 }
 
-let results = Object.keys(emot).map(v => [v, new RegExp(v, 'gi')]).filter(v => v[1].test(string))
-if (!results.length) return ''
-else return emot[results[0][0]]
-}
+
+function emoticonMatcher(string, emot) {
+    let results = Object.keys(emot).map(v => [v, new RegExp(v, 'gi')]).filter(v => v[1].test(string))
+    if (!results.length) return ''
+    else return emot[results[0][0]]
 }
 
 module.exports = {
     SESSION_MAX_AGE: 1800000,
-    CLEAN_INTERVAL: 120000
+    CLEAN_INTERVAL: 120000,
+    emoticonMatcher 
 };
 
 global.closeMsgInterval = 30; 
-global.backMsgInterval = 2; 
+global.backMsgInterval = 2;
