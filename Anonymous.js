@@ -126,7 +126,7 @@ createSerial,
 checkRegisteredUser 
 } = require('./lib/register.js')
 const wm = global.wm || global.wmarthazy || 'ANONYMOUS MD';
-    
+const NoPushkontak = ownernumber; 
 //DATABASE   
 const Premium = JSON.parse(fs.readFileSync("./database/premium.json"))
 
@@ -202,31 +202,32 @@ const Premium = JSON.parse(fs.readFileSync("./database/premium.json"))
   const isAdmins = m?.isGroup ? groupAdmins.includes(m.sender) : false;
   const isGroupOwner = m?.isGroup ? groupOwner === m.sender : false;
   
-   // --- ANTI-LINK ENFORCEMENT SNIPPET (delete message + kick) ---
-try {
+// --- ANTI-LINK ENFORCEMENT SNIPPET (delete message + kick) ---
 
+try {
   global.db.data = global.db.data || {};
   global.db.data.chats = global.db.data.chats || {};
   if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {};
 
   const chatSettings = global.db.data.chats[m.chat];
-
   const linkRegex = /(https?:\/\/chat\.whatsapp\.com\/|https?:\/\/wa\.me\/|https?:\/\/t\.me\/joinchat\/|https?:\/\/t\.me\/|https?:\/\/(www\.)?instagram\.com\/|https?:\/\/(www\.)?facebook\.com\/|https?:\/\/(www\.)?discord\.gg\/|https?:\/\/(www\.)?youtube\.com\/|http:\/\/|https:\/\/)/i;
-
   const msgText = (typeof body === 'string') ? body : '';
 
-  if (isGroup && chatSettings.antilink && msgText && linkRegex.test(msgText)) {
-   
-    if (isCreator || isAdmins) {
-      
-    } else {
+  // Debug log for admin check
+  console.log(`Antilink DEBUG: sender=${m.sender} | isCreator=${isCreator} | isAdmins=${isAdmins} | isGroupOwner=${isGroupOwner} | botAdmins=${isBotAdmins}`);
 
+  if (isGroup && chatSettings.antilink && msgText && linkRegex.test(msgText)) {
+    if (isCreator || isAdmins || isGroupOwner) {
+    
+      console.log(`Antilink: ${m.sender} is exempt (owner/admin/group owner), no action taken.`);
+    } else {
+      // Enforcement for regular users
       if (isBotAdmins) {
         try {
           await conn.sendMessage(m.chat, { delete: m.key });
-          console.log(`Anti-link: deleted message from ${m.sender} in ${m.chat}`);
+          console.log(`Antilink: Deleted message from ${m.sender} in ${m.chat}`);
         } catch (delErr) {
-          console.error('Anti-link: failed to delete message:', delErr);
+          console.error('Antilink: Failed to delete message:', delErr);
         }
       }
 
@@ -237,27 +238,26 @@ try {
           { quoted: m }
         );
       } catch (notifyErr) {
-        console.error('Anti-link: failed to send warning message:', notifyErr);
+        console.error('Antilink: Failed to send warning message:', notifyErr);
       }
 
       if (isBotAdmins) {
         try {
           await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
-          console.log(`Anti-link: removed ${m.sender} from ${m.chat}`);
+          console.log(`Antilink: Removed ${m.sender} from ${m.chat}`);
         } catch (removeErr) {
-          console.error('Anti-link: failed to remove user:', removeErr);
+          console.error('Antilink: Failed to remove user:', removeErr);
           try {
             await conn.sendMessage(m.chat, { text: `⚠️ Failed to remove user automatically. Please remove them manually.` }, { quoted: m });
           } catch (_) {}
         }
       } else {
-
         try {
           await conn.sendMessage(m.chat, { text: '⚠️ I am not an admin — I cannot delete messages or remove users. Please ask a group admin to take action.' }, { quoted: m });
         } catch (_) {}
       }
     }
-    return;
+    return; 
   }
 } catch (e) {
   console.error('Anti-link enforcement error:', e);
